@@ -5,7 +5,7 @@ import { HydratedDocument, Types } from "mongoose";
   timestamps: true,
 })
 export class Category {
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true })
   name: string;
 
   @Prop({ type: Types.ObjectId, ref: "Category", default: null })
@@ -18,7 +18,7 @@ export class Category {
   level: number;
 
   @Prop({ default: true })
-  isLeaf: boolean; // để biết có category con không
+  is_leaf: boolean; // để biết có category con không
 }
 
 export type CategoryDocument = HydratedDocument<Category>;

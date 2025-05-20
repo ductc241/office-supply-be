@@ -8,8 +8,8 @@ export class Brand {
   @Prop({ required: true, unique: true })
   name: string;
 
-  @Prop()
-  logo?: string;
+  @Prop({ default: null })
+  logo?: string | null;
 }
 
 export type BrandDocument = HydratedDocument<Brand>;

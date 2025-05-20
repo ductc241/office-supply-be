@@ -15,7 +15,7 @@ export class Product {
   category: Types.ObjectId; // category cuối
 
   @Prop({ type: [Types.ObjectId], ref: "Category", index: true })
-  categoryPath: Types.ObjectId[]; // toàn bộ path (tương tự ancestors)
+  category_path: Types.ObjectId[]; // toàn bộ path (tương tự ancestors của category hiện tại)
 
   @Prop({ type: Types.ObjectId, ref: "Brand", required: true })
   brand: Types.ObjectId;

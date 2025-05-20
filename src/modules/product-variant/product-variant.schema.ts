@@ -19,19 +19,19 @@ export class ProductVariant {
   stock: number;
 
   @Prop({ type: Number, required: true })
-  basePrice: number;
+  base_price: number;
 
   @Prop({ type: Number, default: null })
-  minPrice: number;
+  min_price: number;
 
   @Prop({ type: Number, default: null })
-  maxPrice: number;
+  max_price: number;
 
   @Prop({ type: Number, default: null })
-  lastCostPrice: number;
+  last_cost_price: number;
 
   @Prop({ type: Number, default: null })
-  averageCostPrice: number;
+  average_cost_price: number;
 }
 
 export type ProductVariantDocument = HydratedDocument<ProductVariant>;

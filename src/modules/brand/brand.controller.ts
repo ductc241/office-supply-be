@@ -21,7 +21,7 @@ import {
 import { UpdateBrandDto } from "./dto/update-brand.dto";
 import { CreateBrandDto } from "./dto/create-brand.dto";
 
-@Controller("brands")
+@Controller("brand")
 export class BrandController {
   constructor(
     private readonly brandService: BrandService,

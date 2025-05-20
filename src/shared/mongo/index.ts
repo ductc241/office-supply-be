@@ -8,7 +8,6 @@ import {
   FilterQuery,
   Model,
   MongooseBulkWriteOptions,
-  ObjectId,
   Query,
   QueryOptions,
   SaveOptions,
@@ -70,7 +69,7 @@ export interface IRepository<T extends Document> {
   ): Promise<BulkWriteResult>;
 
   deleteById(
-    id: string | ObjectId,
+    id: string | Types.ObjectId,
     options?: FindOneAndDeleteOptions,
   ): Promise<T | null>;
 
@@ -86,13 +85,16 @@ export interface IRepository<T extends Document> {
 
   exists(conditions: FilterQuery<T>): Promise<Pick<T, "_id"> | null>;
 
-  existsById(id: string | ObjectId): Promise<Pick<T, "_id"> | null>;
+  existsById(id: string | Types.ObjectId): Promise<Pick<T, "_id"> | null>;
 
   find(conditions: FilterQuery<T>, options?: QueryOptions<T>): Promise<T[]>;
 
   findAll(options?: QueryOptions<T>): Promise<T[]>;
 
-  findById(id: string | ObjectId, options?: QueryOptions<T>): Promise<T | null>;
+  findById(
+    id: string | Types.ObjectId,
+    options?: QueryOptions<T>,
+  ): Promise<T | null>;
 
   findOne(
     conditions: FilterQuery<T>,
@@ -116,7 +118,7 @@ export interface IRepository<T extends Document> {
   ): Promise<any>;
 
   updateById(
-    id: string | ObjectId,
+    id: string | Types.ObjectId,
     doc: UpdateQuery<T>,
     options?: FindAndUpdateOptions,
   ): Promise<T | null>;
@@ -377,7 +379,7 @@ export class BaseRepository<T extends Document> implements IRepository<T> {
   }
 
   async updateById(
-    id: string | ObjectId,
+    id: string | Types.ObjectId,
     doc: UpdateQuery<T>,
     options?: QueryOptions,
   ): Promise<T> {
