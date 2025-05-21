@@ -8,41 +8,38 @@ export class User {
   @Prop({ unique: true, required: true })
   email: string;
 
-  @Prop({ unique: true, sparse: true })
-  phone: string;
-
   @Prop({ required: true })
   password: string;
 
   @Prop({ required: true })
-  lastPassword: string;
+  last_password: string;
 
-  @Prop()
-  fullName: string;
+  @Prop({ default: null })
+  full_name?: string | null;
 
-  @Prop()
-  dateOfBirth: Date;
+  @Prop({ default: null })
+  date_of_birth: Date | null;
 
   @Prop({ enum: ["male", "female", "other"], default: "other" })
   gender: string;
 
-  @Prop()
-  avatarUrl: string;
+  @Prop({ default: null })
+  avatar_url: string | null;
 
   @Prop({ default: true })
-  isActive: boolean;
+  is_active: boolean;
 
-  @Prop({ type: Number })
-  totalOrder: number;
+  @Prop({ type: Number, default: 0 })
+  total_order: number;
 
-  @Prop({ type: Number })
-  totalShoppingAmount: number;
+  @Prop({ type: Number, default: 0 })
+  total_shopping_amount: number;
 
   @Prop({ enum: ["customer", "admin"], default: "customer" })
-  userType: string;
+  user_type: string;
 
   @Prop({ type: Date })
-  lastLoginAt: Date;
+  last_login_at: Date;
 
   // @Prop({ enum: ["bronze", "silver", "gold", "platinum"], default: "bronze" })
   // loyaltyLevel: string;

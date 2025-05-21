@@ -7,6 +7,7 @@ import {
   IsOptional,
   IsString,
   IsObject,
+  ValidateIf,
 } from "class-validator";
 
 export class CreateProductVariantDto {
@@ -27,13 +28,23 @@ export class CreateProductVariantDto {
   @IsString()
   sku: string;
 
+  // @ApiProperty({
+  //   example: { color: "red", size: "M" },
+  //   description: "Tổ hợp thuộc tính (màu sắc, kích cỡ, v.v.)",
+  // })
+  // @IsObject()
+  // @IsNotEmpty()
+  // attributes: Record<string, string>;
   @ApiProperty({
-    example: { color: "red", size: "M" },
-    description: "Tổ hợp thuộc tính (màu sắc, kích cỡ, v.v.)",
+    description: "Các thuộc tính của biến thể sản phẩm dưới dạng key-value",
+    required: false,
+    nullable: true,
+    example: { color: "red", size: "L" },
   })
+  @IsOptional()
+  @ValidateIf((o) => o.attributes !== null)
   @IsObject()
-  @IsNotEmpty()
-  attributes: Record<string, string>;
+  attributes?: Record<string, string> | null;
 
   @ApiProperty({ example: 10, description: "Số lượng tồn kho" })
   @IsNumber()

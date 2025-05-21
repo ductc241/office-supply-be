@@ -7,13 +7,10 @@ import { HydratedDocument, Types } from "mongoose";
 })
 export class CartItem {
   @Prop({ type: Types.ObjectId, ref: "ProductVariant", required: true })
-  variant: Types.ObjectId;
+  product: Types.ObjectId;
 
   @Prop({ required: true, min: 1 })
   quantity: number;
-
-  @Prop({ required: true })
-  basePriceAtAddTime: number;
 }
 
 export type CartItemDocument = HydratedDocument<CartItem>;

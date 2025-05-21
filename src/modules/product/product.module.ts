@@ -7,9 +7,10 @@ import { Product, ProductSchema } from "./product.schema";
 import { ProductRepository } from "./product.repository";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { CategoryModule } from "../category/category.module";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
 @Module({
-  providers: [ProductService, ProductRepository],
+  providers: [ProductService, ProductRepository, PaginationHeaderHelper],
   controllers: [ProductController],
   imports: [
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),

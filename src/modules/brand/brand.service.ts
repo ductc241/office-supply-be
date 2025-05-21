@@ -54,7 +54,7 @@ export class BrandService {
     return { headers: responseHeaders, items: brands };
   }
 
-  async findOne(id: string) {
+  async findById(id: string) {
     const brand = await this.brandRepository.findById(id);
     if (!brand) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
     return brand;

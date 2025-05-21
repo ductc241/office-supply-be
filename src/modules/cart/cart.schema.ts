@@ -18,9 +18,6 @@ export class Cart {
     enum: ["active", "abandoned", "converted"],
   })
   status: string;
-
-  @Prop()
-  lastUpdated: Date;
 }
 
 export type CartDocument = HydratedDocument<Cart>;
