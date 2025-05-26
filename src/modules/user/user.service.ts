@@ -27,7 +27,7 @@ export class UserService {
     return user;
   }
 
-  async findByQuery(query: any) {
+  async findOne(query: any) {
     const user = await this.userRepository.findOne(query);
     return user;
   }

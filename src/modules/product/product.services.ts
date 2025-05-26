@@ -3,7 +3,7 @@ import { ProductRepository } from "./product.repository";
 import { CreateFullProductDto } from "./dto/create-product.dto";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import { CategoryService } from "../category/category.service";
-import { Types } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import { QueryProductsDto } from "./dto/query-product";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 import { IPagination } from "src/shared/pagination/pagination.interface";
@@ -160,6 +160,11 @@ export class ProductService {
     };
   }
 
+  async findOne(conditions: any, options?: QueryOptions) {
+    const user = await this.productRepository.findOne(conditions, options);
+    return user;
+  }
+
   async create(dto: CreateFullProductDto) {
     try {
       const { product: productDto, variants } = dto;
@@ -221,7 +226,6 @@ export class ProductService {
       };
     } catch (error) {
       // throw new BadRequestException((error as Error).message);
-      // console.log(error);
       throw error;
     }
   }

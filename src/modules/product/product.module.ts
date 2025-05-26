@@ -17,5 +17,6 @@ import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper"
     ProductVariantModule,
     CategoryModule,
   ],
+  exports: [ProductService, ProductRepository],
 })
 export class ProductModule {}

@@ -21,6 +21,7 @@ async function bootstrap() {
       },
       exceptionFactory: (errors) => {
         console.log(errors);
+
         const formatted = errors.map((err) => ({
           field: err.property,
           errors: Object.values(err.constraints || {}),
@@ -39,6 +40,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle("Office Supply API")
     .setVersion("1.0")
+    .addBearerAuth()
     .build();
   const documentFactory = () => SwaggerModule.createDocument(app, config);
   SwaggerModule.setup("api", app, documentFactory);

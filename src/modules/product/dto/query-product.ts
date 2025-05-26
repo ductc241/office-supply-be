@@ -13,7 +13,7 @@ import { BaseQueryDto } from "src/shared/pagination/pagination.dto";
 export class QueryProductsDto extends BaseQueryDto {
   @ApiPropertyOptional({
     description: "Từ khóa tìm kiếm theo tên sản phẩm",
-    example: "nike",
+    example: "",
   })
   @IsOptional()
   @IsString()
@@ -22,21 +22,21 @@ export class QueryProductsDto extends BaseQueryDto {
   @ApiPropertyOptional({
     description: "Danh sách categoryId cần lọc",
     type: [String],
-    example: ["665abc...", "665def..."],
+    example: ["665abc..."],
   })
   @IsOptional()
   @IsArray()
   @IsMongoId({ each: true })
   categoryIds?: string[];
 
-  @ApiPropertyOptional({ description: "Giá thấp nhất", example: 100000 })
+  @ApiPropertyOptional({ description: "Giá thấp nhất", example: 0 })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)
   minPrice?: number;
 
-  @ApiPropertyOptional({ description: "Giá cao nhất", example: 500000 })
+  @ApiPropertyOptional({ description: "Giá cao nhất" })
   @IsOptional()
   @Type(() => Number)
   @IsNumber()
