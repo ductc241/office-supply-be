@@ -7,6 +7,7 @@ import { Order, OrderSchema } from "./order.schema";
 import { CouponModule } from "../coupon/coupon.module";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { OrderController } from "./order.controller";
+import { CouponUsageModule } from "../coupon-usage/coupon-usage.module";
 
 @Module({
   providers: [OrderRepository, OrderService],
@@ -14,6 +15,7 @@ import { OrderController } from "./order.controller";
   imports: [
     MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),
     CouponModule,
+    CouponUsageModule,
     ProductVariantModule,
   ],
 })

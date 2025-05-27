@@ -1,16 +1,22 @@
-import { BadRequestException, Injectable } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { OrderRepository } from "./order.repository";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderStatusDto } from "./dto/update-status-order.dto";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import { CouponService } from "../coupon/coupon.service";
 import { Types } from "mongoose";
+import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
 
 @Injectable()
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
     private readonly couponService: CouponService,
+    private readonly couponUsageService: CouponUsageService,
     private readonly productVariantRepository: ProductVariantRepository,
   ) {}
 
@@ -82,6 +88,16 @@ export class OrderService {
       shipping_address: dto.shipping_address,
     });
 
+    if (dto.coupon) {
+      await this.couponService.markCouponAsUsed(dto.coupon);
+      await this.couponUsageService.logUsage(
+        dto.coupon,
+        userId,
+        order._id.toString(),
+        discount,
+      );
+    }
+
     return order;
   }
 
@@ -92,8 +108,41 @@ export class OrderService {
     if (dto.status === "paid") update.paid_at = now;
     if (dto.status === "shipping") update.shipped_at = now;
     if (dto.status === "delivered") update.completed_at = now;
-    if (dto.status === "cancelled") update.cancelled_at = now;
+
+    if (dto.status === "cancelled") {
+      update.cancelled_at = now;
+      const order = await this.orderRepository.findById(orderId);
+      if (order?.coupon) {
+        await this.couponUsageService.markAsCancelled(orderId);
+        await this.couponService.restoreCouponUsage(order.coupon.toString());
+      }
+    }
 
     return this.orderRepository.updateById(orderId, update);
+  }
+
+  async getOrderById(orderId: string) {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) throw new NotFoundException("Order not found");
+    return order;
+  }
+
+  async listOrdersForUser(userId: string) {
+    return this.orderRepository.find({ user: new Types.ObjectId(userId) });
+  }
+
+  async listOrders(filter: any) {
+    return this.orderRepository.find(filter);
+  }
+
+  async cancelOrder(orderId: string, userId: string) {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order || order.user.toString() !== userId) {
+      throw new NotFoundException("Order not found or not authorized");
+    }
+    if (order.status !== "pending") {
+      throw new BadRequestException("Only pending orders can be cancelled");
+    }
+    return this.updateStatus(orderId, { status: "cancelled" });
   }
 }

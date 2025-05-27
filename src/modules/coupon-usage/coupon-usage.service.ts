@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { CouponUsageRepository } from "./coupon-usage.repository";
 import { Types } from "mongoose";
+import { CouponUsageRepository } from "./coupon-usage.repository";
 
 @Injectable()
 export class CouponUsageService {
@@ -59,5 +59,13 @@ export class CouponUsageService {
         },
       },
     ]);
+  }
+
+  async countUsageByUser(userId: string, couponId: string) {
+    return this.couponUsageRepository.count({
+      user: new Types.ObjectId(userId),
+      coupon: new Types.ObjectId(couponId),
+      status: "used",
+    });
   }
 }
