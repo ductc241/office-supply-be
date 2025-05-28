@@ -37,7 +37,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: typeof message === "string" ? message : "Error occurred",
       timestamp: new Date().toISOString(),
       errors: details,
-      raw: exception,
+      // raw: exception,
     });
   }
 

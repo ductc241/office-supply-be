@@ -19,6 +19,12 @@ export class Category {
 
   @Prop({ default: true })
   is_leaf: boolean; // để biết có category con không
+
+  @Prop({ type: Map, of: String, default: {} })
+  attributes: Map<string, string>;
+
+  @Prop({ type: [Types.ObjectId], ref: "Brand", default: [] })
+  brands: Types.ObjectId[];
 }
 
 export type CategoryDocument = HydratedDocument<Category>;

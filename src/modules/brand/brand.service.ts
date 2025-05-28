@@ -12,6 +12,7 @@ import { IPagination } from "src/shared/pagination/pagination.interface";
 import { QueryBrandDto } from "./dto/query-brand.dto";
 import { replaceQuerySearch } from "src/shared/helpers/common";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
+import { IIncludeSoftDeletedOptions } from "src/shared/mongo";
 
 @Injectable()
 export class BrandService {
@@ -58,6 +59,11 @@ export class BrandService {
     const brand = await this.brandRepository.findById(id);
     if (!brand) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
     return brand;
+  }
+
+  async countAll(conditions: any, options?: IIncludeSoftDeletedOptions) {
+    const user = await this.brandRepository.count(conditions, options);
+    return user;
   }
 
   async update(id: string, updateBrandDto: UpdateBrandDto) {

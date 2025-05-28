@@ -31,8 +31,13 @@ export class CategoryController {
 
   // @Get(":id")
   @Get()
-  findOne() {
+  query() {
     return this.categoryService.query();
+  }
+
+  @Get("get-tree")
+  getTree() {
+    return this.categoryService.getTree();
   }
 
   // @Patch(":id")

@@ -5,6 +5,7 @@ import { CategoryService } from "./category.service";
 import { CategoryController } from "./category.controller";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 import { CategoryRepository } from "./category.repository";
+import { BrandModule } from "../brand/brand.module";
 
 @Module({
   providers: [CategoryService, CategoryRepository, PaginationHeaderHelper],
@@ -13,6 +14,7 @@ import { CategoryRepository } from "./category.repository";
     MongooseModule.forFeature([
       { name: Category.name, schema: CategorySchema },
     ]),
+    BrandModule,
   ],
   exports: [CategoryService],
 })

@@ -6,15 +6,34 @@ import {
 import { CategoryRepository } from "./category.repository";
 import { Types } from "mongoose";
 import { CreateCategoryDto } from "./dto/create-category.dto";
+import { BrandService } from "../brand/brand.service";
 
 @Injectable()
 export class CategoryService {
-  constructor(private readonly categoryRepository: CategoryRepository) {}
+  constructor(
+    private readonly categoryRepository: CategoryRepository,
+    private readonly brandService: BrandService,
+  ) {}
 
   async create(dto: CreateCategoryDto) {
     const existing = await this.categoryRepository.findOne({ name: dto.name });
     if (existing) {
       throw new BadRequestException("Category name must be unique.");
+    }
+
+    let brands = [];
+
+    if (dto.brands && dto.brands.length > 0) {
+      const brandIds = dto.brands.map((item) => new Types.ObjectId(item));
+
+      const validBrands = await this.brandService.countAll({
+        _id: { $in: brandIds },
+      });
+
+      if (validBrands !== dto.brands.length)
+        throw new BadRequestException("Brand doesnt exist");
+
+      brands = brandIds;
     }
 
     let parentId = null;
@@ -35,7 +54,7 @@ export class CategoryService {
       ancestors = [...(parent.ancestors || []), parent._id];
       level = parent.level + 1;
 
-      // Cập nhật parent thành không còn là leaf nếu cần
+      // Cập nhật parent thành không còn là leaf
       if (parent.is_leaf) {
         await this.categoryRepository.updateById(parent._id, {
           is_leaf: false,
@@ -49,11 +68,45 @@ export class CategoryService {
       ancestors,
       level,
       is_leaf: true,
+      attributes: dto.attributes,
+      brands,
     });
   }
 
   async query() {
     return this.categoryRepository.find({});
+  }
+
+  async getTree() {
+    const categories = await this.categoryRepository.find({});
+
+    const categoryMap = new Map<string, any>();
+    categories.forEach((category) => {
+      categoryMap.set(category._id.toString(), {
+        _id: category._id,
+        name: category.name,
+        display_name: category.name,
+        parent_id: category.parentId ? category.parentId.toString() : "0",
+        has_children: false,
+        children: [],
+      });
+    });
+
+    const tree = [];
+
+    categoryMap.forEach((category) => {
+      if (category.parent_id === "0") {
+        tree.push(category);
+      } else {
+        const parent = categoryMap.get(category.parent_id);
+        if (parent) {
+          parent.children.push(category);
+          parent.has_children = true;
+        }
+      }
+    });
+
+    return tree;
   }
 
   async findOne(id: string) {
