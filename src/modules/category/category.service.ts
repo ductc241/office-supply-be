@@ -7,6 +7,7 @@ import { CategoryRepository } from "./category.repository";
 import { Types } from "mongoose";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { BrandService } from "../brand/brand.service";
+import { IGetChildDto } from "./dto/get-child.dto";
 
 @Injectable()
 export class CategoryService {
@@ -107,6 +108,42 @@ export class CategoryService {
     });
 
     return tree;
+  }
+
+  async getChild(dto: IGetChildDto) {
+    const categories = await this.categoryRepository.find(
+      {
+        parentId: new Types.ObjectId(dto.categoryId),
+      },
+      {
+        projection: { _id: 1, name: 1 },
+      },
+    );
+    const categoryIds = categories.map((category) => category._id);
+
+    const childCategories = await this.categoryRepository.find(
+      {
+        parentId: { $in: categoryIds },
+      },
+      {
+        projection: { _id: 1, name: 1, parentId: 1 },
+      },
+    );
+
+    const listChild = categories.map((category) => ({
+      ...category.toObject(),
+      children: [],
+    }));
+
+    listChild.forEach((child) => {
+      childCategories.forEach((category) => {
+        if (category.parentId.toString() === child._id.toString()) {
+          child.children.push(category);
+        }
+      });
+    });
+
+    return listChild;
   }
 
   async findOne(id: string) {
