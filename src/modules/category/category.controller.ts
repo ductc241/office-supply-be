@@ -2,6 +2,7 @@ import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { CategoryService } from "./category.service";
 
 import { CreateCategoryDto } from "./dto/create-category.dto";
+import { ApiOperation } from "@nestjs/swagger";
 
 @Controller("categories")
 export class CategoryController {
@@ -29,21 +30,45 @@ export class CategoryController {
   //   return await this.brandService.query(query, pagination);
   // }
 
-  // @Get(":id")
   @Get()
   query() {
     return this.categoryService.query();
   }
 
   @Get("get-tree")
+  @ApiOperation({
+    summary: "web - get category list in tree form",
+  })
   getTree() {
     return this.categoryService.getTree();
   }
 
-  @Get("get-child/:id")
-  getChild(@Param("id") id: string) {
-    return this.categoryService.getChild({ categoryId: id });
+  @Get("get-detail/:categoryId")
+  @ApiOperation({
+    summary: "web - get category detail with child categories",
+  })
+  getDetail(@Param("categoryId") categoryId: string) {
+    return this.categoryService.getDetail(categoryId);
   }
+
+  // @Get("get-child/:categoryId")
+  // getChild(@Param("categoryId") categoryId: string) {
+  //   return this.categoryService.getChild(categoryId);
+  // }
+
+  @ApiOperation({
+    summary:
+      "web - get the list of sibling categories that share the same parent.",
+  })
+  @Get("get-related/:categoryId")
+  getBrands(@Param("categoryId") categoryId: string) {
+    return this.categoryService.getRelatedCategies(categoryId);
+  }
+
+  // @Get("get-brands/:categoryId")
+  // getBrands(@Param("categoryId") categoryId: string) {
+  //   return this.categoryService.getRelatedBrands(categoryId);
+  // }
 
   // @Patch(":id")
   // update(@Param("id") id: string, @Body() updateBrandDto: UpdateBrandDto) {

@@ -8,6 +8,9 @@ export class Category {
   @Prop({ required: true, unique: true })
   name: string;
 
+  @Prop({ default: null })
+  logo: string | null;
+
   @Prop({ type: Types.ObjectId, ref: "Category", default: null })
   parentId: Types.ObjectId | null;
 

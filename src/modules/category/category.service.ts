@@ -7,7 +7,7 @@ import { CategoryRepository } from "./category.repository";
 import { Types } from "mongoose";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { BrandService } from "../brand/brand.service";
-import { IGetChildDto } from "./dto/get-child.dto";
+import ERROR_MESSAGE from "src/shared/constants/error";
 
 @Injectable()
 export class CategoryService {
@@ -65,6 +65,7 @@ export class CategoryService {
 
     return this.categoryRepository.create({
       name: dto.name,
+      logo: dto.logo,
       parentId,
       ancestors,
       level,
@@ -76,6 +77,25 @@ export class CategoryService {
 
   async query() {
     return this.categoryRepository.find({});
+  }
+
+  async findOne(id: string) {
+    const category = await this.categoryRepository.findById(id);
+    if (!category) throw new NotFoundException("Category not found");
+    return category;
+  }
+
+  async getDetail(id: string) {
+    const category = await this.categoryRepository.findById(id, {
+      projection: {
+        name: 1,
+      },
+    });
+    if (!category) throw new NotFoundException("Category not found");
+
+    const childCategories = await this.getChild(id);
+
+    return { category, children: childCategories };
   }
 
   async getTree() {
@@ -110,46 +130,82 @@ export class CategoryService {
     return tree;
   }
 
-  async getChild(dto: IGetChildDto) {
-    const categories = await this.categoryRepository.find(
-      {
-        parentId: new Types.ObjectId(dto.categoryId),
-      },
-      {
-        projection: { _id: 1, name: 1 },
-      },
-    );
-    const categoryIds = categories.map((category) => category._id);
+  async getChild(categoryId: string) {
+    try {
+      const categories = await this.categoryRepository.find(
+        {
+          parentId: new Types.ObjectId(categoryId),
+        },
+        {
+          projection: { name: 1, logo: 1, is_leaf: 1 },
+        },
+      );
+      const categoryIds = categories.map((category) => category._id);
 
-    const childCategories = await this.categoryRepository.find(
-      {
-        parentId: { $in: categoryIds },
-      },
-      {
-        projection: { _id: 1, name: 1, parentId: 1 },
-      },
-    );
+      const childCategories = await this.categoryRepository.find(
+        {
+          parentId: { $in: categoryIds },
+        },
+        {
+          projection: { name: 1, parentId: 1, logo: 1, is_leaf: 1 },
+        },
+      );
 
-    const listChild = categories.map((category) => ({
-      ...category.toObject(),
-      children: [],
-    }));
+      const listChild = categories.map((category) => ({
+        ...category.toObject(),
+        children: [],
+      }));
 
-    listChild.forEach((child) => {
-      childCategories.forEach((category) => {
-        if (category.parentId.toString() === child._id.toString()) {
-          child.children.push(category);
-        }
+      listChild.forEach((child) => {
+        childCategories.forEach((category) => {
+          if (category.parentId.toString() === child._id.toString()) {
+            child.children.push(category);
+          }
+        });
       });
-    });
 
-    return listChild;
+      return listChild;
+    } catch (error) {
+      throw error;
+    }
   }
 
-  async findOne(id: string) {
-    const category = await this.categoryRepository.findById(id);
-    if (!category) throw new NotFoundException("Category not found");
-    return category;
+  async getRelatedBrands(categoryId: string) {
+    try {
+      const category = await this.categoryRepository.findById(categoryId, {
+        populate: {
+          path: "brands",
+          select: "_id name logo",
+        },
+      });
+
+      if (!category) {
+        throw new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
+      }
+      return category.brands;
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+  }
+
+  async getRelatedCategies(categoryId: string) {
+    const category = await this.categoryRepository.findById(categoryId);
+
+    if (!category) throw new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
+
+    return await this.categoryRepository.find(
+      {
+        parentId: category.parentId,
+        level: category.level,
+      },
+      {
+        projection: {
+          name: 1,
+          logo: 1,
+        },
+      },
+    );
   }
 
   async update(id: string, updates: Partial<{ name: string }>) {

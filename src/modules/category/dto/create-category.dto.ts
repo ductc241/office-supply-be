@@ -16,6 +16,11 @@ export class CreateCategoryDto {
   @MaxLength(100, { message: "Tên danh mục không được vượt quá 100 ký tự." })
   name: string;
 
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  logo?: string;
+
   @ApiPropertyOptional()
   @IsOptional()
   @IsMongoId({ message: "parentId phải là ObjectId hợp lệ." })
