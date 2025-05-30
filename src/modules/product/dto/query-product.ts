@@ -1,6 +1,7 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsArray,
+  IsEnum,
   IsMongoId,
   IsNumber,
   IsOptional,
@@ -9,6 +10,7 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { BaseQueryDto } from "src/shared/pagination/pagination.dto";
+import { ProductFilter } from "../types/product.enum";
 
 export class QueryProductsDto extends BaseQueryDto {
   @ApiPropertyOptional({
@@ -42,4 +44,13 @@ export class QueryProductsDto extends BaseQueryDto {
   @IsNumber()
   @Min(0)
   maxPrice?: number;
+
+  @IsEnum(ProductFilter)
+  @ApiPropertyOptional({
+    type: String,
+    enum: ProductFilter,
+    description: "Sắp xếp",
+  })
+  @IsOptional()
+  sort?: ProductFilter;
 }

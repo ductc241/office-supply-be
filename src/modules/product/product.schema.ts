@@ -11,6 +11,12 @@ export class Product {
   @Prop({ default: null })
   description: string | null;
 
+  @Prop({ default: null })
+  image_preview: string | null;
+
+  @Prop({ type: [String], default: [] })
+  images: string[];
+
   @Prop({ type: Types.ObjectId, ref: "Category", required: true })
   category: Types.ObjectId; // category cuối
 

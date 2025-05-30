@@ -7,6 +7,7 @@ import { QueryOptions, Types } from "mongoose";
 import { QueryProductsDto } from "./dto/query-product";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 import { IPagination } from "src/shared/pagination/pagination.interface";
+import { ProductFilter } from "./types/product.enum";
 
 @Injectable()
 export class ProductService {
@@ -18,7 +19,7 @@ export class ProductService {
   ) {}
 
   async query(
-    { search, categoryIds, minPrice, maxPrice }: QueryProductsDto,
+    { search, categoryIds, minPrice, maxPrice, sort }: QueryProductsDto,
     pagination: IPagination,
   ) {
     const { page, perPage } = pagination;
@@ -72,10 +73,6 @@ export class ProductService {
       // Add price range + filter matched_variants
       {
         $addFields: {
-          price_range: {
-            min: { $min: "$variants.base_price" },
-            max: { $max: "$variants.base_price" },
-          },
           matched_variants: {
             $map: {
               input: {
@@ -105,6 +102,17 @@ export class ProductService {
           },
         },
       },
+      {
+        $addFields: {
+          price_range: {
+            min: { $min: "$matched_variants.base_price" },
+            max: { $max: "$matched_variants.base_price" },
+          },
+          sortPrice: {
+            $min: "$matched_variants.base_price",
+          },
+        },
+      },
 
       // Only keep products with at least one matched variant
       {
@@ -118,6 +126,14 @@ export class ProductService {
         $facet: {
           products: [
             { $sort: { createdAt: -1 } },
+            {
+              $sort:
+                sort === ProductFilter.LOWEST_PRICE
+                  ? { sortPrice: 1 }
+                  : sort === ProductFilter.HIGHEST_PRICE
+                    ? { sortPrice: -1 }
+                    : { createdAt: -1 },
+            },
             { $skip: (page - 1) * perPage },
             { $limit: perPage },
             {
@@ -170,9 +186,9 @@ export class ProductService {
       const { product: productDto, variants } = dto;
 
       const category = await this.categoryService.findOne(productDto.category);
-      if (category.level !== 2 || !category.is_leaf) {
-        throw new BadRequestException("Category must be a level 2 leaf node");
-      }
+      // if (category.level !== 2 || !category.is_leaf) {
+      //   throw new BadRequestException("Category must be a level 2 leaf node");
+      // }
 
       if (variants.length > 1 && variants[0].attributes !== null) {
         // Kiểm tra attributes là bắt buộc và không trùng nhau
@@ -226,6 +242,7 @@ export class ProductService {
       };
     } catch (error) {
       // throw new BadRequestException((error as Error).message);
+      console.log(error);
       throw error;
     }
   }

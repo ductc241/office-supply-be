@@ -27,6 +27,24 @@ class CreateProductDto {
   description?: string;
 
   @ApiProperty({
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  image_preview?: string;
+
+  @ApiProperty({
+    description: "Danh sách ảnh",
+    type: [String],
+    example: [""],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsMongoId({ each: true })
+  @Type(() => String)
+  images?: string[];
+
+  @ApiProperty({
     example: "665a9bc71c34a31d8ff8eabc",
     description: "ID của category cấp 2",
   })

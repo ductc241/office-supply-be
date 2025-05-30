@@ -170,6 +170,25 @@ export class CategoryService {
     }
   }
 
+  async getSibling(categoryId: string) {
+    const category = await this.categoryRepository.findById(categoryId);
+
+    if (!category) throw new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
+
+    return await this.categoryRepository.find(
+      {
+        parentId: category.parentId,
+        level: category.level,
+      },
+      {
+        projection: {
+          name: 1,
+          logo: 1,
+        },
+      },
+    );
+  }
+
   async getRelatedBrands(categoryId: string) {
     try {
       const category = await this.categoryRepository.findById(categoryId, {
@@ -187,25 +206,6 @@ export class CategoryService {
       console.log(error);
       throw error;
     }
-  }
-
-  async getRelatedCategies(categoryId: string) {
-    const category = await this.categoryRepository.findById(categoryId);
-
-    if (!category) throw new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
-
-    return await this.categoryRepository.find(
-      {
-        parentId: category.parentId,
-        level: category.level,
-      },
-      {
-        projection: {
-          name: 1,
-          logo: 1,
-        },
-      },
-    );
   }
 
   async update(id: string, updates: Partial<{ name: string }>) {

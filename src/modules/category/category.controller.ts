@@ -56,13 +56,13 @@ export class CategoryController {
   //   return this.categoryService.getChild(categoryId);
   // }
 
+  @Get("get-sibling/:categoryId")
   @ApiOperation({
     summary:
       "web - get the list of sibling categories that share the same parent.",
   })
-  @Get("get-related/:categoryId")
-  getBrands(@Param("categoryId") categoryId: string) {
-    return this.categoryService.getRelatedCategies(categoryId);
+  getSibling(@Param("categoryId") categoryId: string) {
+    return this.categoryService.getSibling(categoryId);
   }
 
   // @Get("get-brands/:categoryId")
