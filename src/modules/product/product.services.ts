@@ -181,6 +181,48 @@ export class ProductService {
     return user;
   }
 
+  async getDetail() {
+    // product: detai + total variant stock
+    // available product attributes
+  }
+
+  async getVariantDetail() {}
+
+  async getAvailableProductAttributes(productId: string) {
+    const productVariants = await this.productVariantRepository.find(
+      {
+        product: new Types.ObjectId(productId),
+      },
+      {
+        projection: {
+          attributes: 1,
+          stock: 1,
+          base_price: 1,
+        },
+      },
+    );
+
+    const attributesMap = {};
+
+    for (const variant of productVariants) {
+      const attributes = variant.attributes || {};
+      for (const [key, value] of Object.entries(attributes)) {
+        if (!attributesMap[key]) {
+          attributesMap[key] = new Set();
+        }
+        attributesMap[key].add(value);
+      }
+    }
+
+    const availableAttributes: Record<string, any[]> = {};
+
+    for (const key in attributesMap) {
+      availableAttributes[key] = Array.from(attributesMap[key]);
+    }
+
+    return { attributes: availableAttributes, variants: productVariants };
+  }
+
   async create(dto: CreateFullProductDto) {
     try {
       const { product: productDto, variants } = dto;

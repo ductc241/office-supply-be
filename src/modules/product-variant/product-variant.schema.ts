@@ -12,8 +12,8 @@ export class ProductVariant {
   @Prop({ unique: true, required: true })
   sku: string;
 
-  @Prop({ type: Map, of: String })
-  attributes: Map<string, string>;
+  @Prop({ type: Object })
+  attributes: Record<string, string>;
 
   @Prop({ type: Number, required: true, default: 0 })
   stock: number;

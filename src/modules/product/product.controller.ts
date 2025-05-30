@@ -28,4 +28,9 @@ export class ProductController {
   ) {
     return await this.productService.query(dto, pagination);
   }
+
+  @Get("available-product-variant/:id")
+  async getAvailableProductAttributes(@Query("id") id: string) {
+    return await this.productService.getAvailableProductAttributes(id);
+  }
 }
