@@ -86,16 +86,24 @@ export class CategoryService {
   }
 
   async getDetail(id: string) {
-    const category = await this.categoryRepository.findById(id, {
-      projection: {
-        name: 1,
-      },
-    });
-    if (!category) throw new NotFoundException("Category not found");
+    try {
+      const category = await this.categoryRepository.findById(id, {
+        projection: {
+          name: 1,
+        },
+        populate: {
+          path: "brands",
+          select: "name logo",
+        },
+      });
+      if (!category) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
 
-    const childCategories = await this.getChild(id);
+      const childCategories = await this.getChild(id);
 
-    return { category, children: childCategories };
+      return { data: category, children: childCategories };
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   async getTree() {
@@ -177,6 +185,9 @@ export class CategoryService {
 
     return await this.categoryRepository.find(
       {
+        _id: {
+          $ne: [new Types.ObjectId(categoryId)],
+        },
         parentId: category.parentId,
         level: category.level,
       },
@@ -184,6 +195,7 @@ export class CategoryService {
         projection: {
           name: 1,
           logo: 1,
+          is_leaf: 1,
         },
       },
     );

@@ -5,8 +5,10 @@ import {
   IsArray,
   IsMongoId,
   IsNotEmpty,
+  IsObject,
   IsOptional,
   IsString,
+  ValidateIf,
   ValidateNested,
 } from "class-validator";
 import { CreateProductVariantDto } from "src/modules/product-variant/dto/create-product-variant.dto";
@@ -43,6 +45,17 @@ class CreateProductDto {
   @IsMongoId({ each: true })
   @Type(() => String)
   images?: string[];
+
+  @ApiProperty({
+    description: "Các thuộc tính của chung sản phẩm dạng key-value",
+    required: false,
+    nullable: true,
+    example: { barre_material: "", country_of_origin: "" },
+  })
+  @IsOptional()
+  @ValidateIf((o) => o.attributes !== null)
+  @IsObject()
+  specifications?: Record<string, string> | null;
 
   @ApiProperty({
     example: "665a9bc71c34a31d8ff8eabc",

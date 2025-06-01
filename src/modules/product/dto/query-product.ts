@@ -8,7 +8,7 @@ import {
   IsString,
   Min,
 } from "class-validator";
-import { Type } from "class-transformer";
+import { Transform, Type } from "class-transformer";
 import { BaseQueryDto } from "src/shared/pagination/pagination.dto";
 import { ProductFilter } from "../types/product.enum";
 
@@ -19,7 +19,7 @@ export class QueryProductsDto extends BaseQueryDto {
   })
   @IsOptional()
   @IsString()
-  search?: string;
+  name?: string;
 
   @ApiPropertyOptional({
     description: "Danh sách categoryId cần lọc",
@@ -27,6 +27,9 @@ export class QueryProductsDto extends BaseQueryDto {
     example: ["665abc..."],
   })
   @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value) ? value : typeof value === "string" ? [value] : [],
+  )
   @IsArray()
   @IsMongoId({ each: true })
   categoryIds?: string[];

@@ -5,9 +5,13 @@ import { ProductVariantRepository } from "../product-variant/product-variant.rep
 import { CategoryService } from "../category/category.service";
 import { QueryOptions, Types } from "mongoose";
 import { QueryProductsDto } from "./dto/query-product";
-import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
-import { IPagination } from "src/shared/pagination/pagination.interface";
+import {
+  createPagination,
+  PaginationHeaderHelper,
+} from "src/shared/pagination/pagination.helper";
 import { ProductFilter } from "./types/product.enum";
+import ERROR_MESSAGE from "src/shared/constants/error";
+import { replaceQuerySearch } from "src/shared/helpers/common";
 
 @Injectable()
 export class ProductService {
@@ -19,14 +23,23 @@ export class ProductService {
   ) {}
 
   async query(
-    { search, categoryIds, minPrice, maxPrice, sort }: QueryProductsDto,
-    pagination: IPagination,
+    {
+      name,
+      categoryIds,
+      minPrice,
+      maxPrice,
+      sort,
+      page = 1,
+      perPage = 10,
+    }: QueryProductsDto,
+    // pagination: IPagination,
   ) {
-    const { page, perPage } = pagination;
+    // const { page, perPage } = pagination;
+    const pagination = createPagination(page, perPage);
     const matchStage: any = {};
 
-    if (search) {
-      matchStage.name = { $regex: search, $options: "i" };
+    if (name) {
+      matchStage.name = { $regex: replaceQuerySearch(name), $options: "i" };
     }
 
     if (categoryIds && categoryIds.length > 0) {
@@ -38,7 +51,6 @@ export class ProductService {
     const pipeline = [
       { $match: matchStage },
 
-      // Join variants
       {
         $lookup: {
           from: "product-variants",
@@ -48,7 +60,6 @@ export class ProductService {
         },
       },
 
-      // Join brand
       {
         $lookup: {
           from: "brands",
@@ -59,16 +70,15 @@ export class ProductService {
       },
       { $unwind: "$brandInfo" },
 
-      // Join category
-      // {
-      //   $lookup: {
-      //     from: "categories",
-      //     localField: "category",
-      //     foreignField: "_id",
-      //     as: "categoryInfo",
-      //   },
-      // },
-      // { $unwind: "$categoryInfo" },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "category",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      { $unwind: "$categoryInfo" },
 
       // Add price range + filter matched_variants
       {
@@ -121,7 +131,6 @@ export class ProductService {
         },
       },
 
-      // Pagination + projection
       {
         $facet: {
           products: [
@@ -139,6 +148,7 @@ export class ProductService {
             {
               $project: {
                 name: 1,
+                image_preview: 1,
                 price_range: 1,
                 total_variants: { $size: "$variants" },
                 matched_variants: 1,
@@ -146,10 +156,6 @@ export class ProductService {
                   _id: "$brandInfo._id",
                   name: "$brandInfo.name",
                 },
-                // category: {
-                //   _id: "$categoryInfo._id",
-                //   name: "$categoryInfo.name",
-                // },
               },
             },
           ],
@@ -177,16 +183,33 @@ export class ProductService {
   }
 
   async findOne(conditions: any, options?: QueryOptions) {
-    const user = await this.productRepository.findOne(conditions, options);
-    return user;
+    const product = await this.productRepository.findOne(conditions, options);
+    return product;
   }
 
-  async getDetail() {
+  async getDetail(productId: string) {
     // product: detai + total variant stock
     // available product attributes
-  }
+    const product = await this.productRepository.findById(productId, {
+      populate: [
+        {
+          path: "category",
+          select: "name is_leaf",
+        },
+        {
+          path: "brand",
+          select: "name logo",
+        },
+      ],
+    });
 
-  async getVariantDetail() {}
+    if (!product) throw new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
+
+    const productAttributes =
+      await this.getAvailableProductAttributes(productId);
+
+    return { data: product, ...productAttributes };
+  }
 
   async getAvailableProductAttributes(productId: string) {
     const productVariants = await this.productVariantRepository.find(
@@ -221,6 +244,54 @@ export class ProductService {
     }
 
     return { attributes: availableAttributes, variants: productVariants };
+  }
+
+  async getUniqueSpecValuesByCategory(categoryId: string) {
+    const pipeline = [
+      [
+        {
+          $match: {
+            category: new Types.ObjectId(categoryId),
+          },
+        },
+        // Chuyển specifications thành mảng key-value
+        {
+          $project: {
+            specifications: { $objectToArray: "$specifications" },
+          },
+        },
+        {
+          $unwind: "$specifications",
+        },
+        // Nhóm theo key của specifications và lấy giá trị không trùng lặp
+        {
+          $group: {
+            _id: "$specifications.k",
+            values: { $addToSet: "$specifications.v" },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            specs: {
+              $push: {
+                k: "$_id",
+                v: "$values",
+              },
+            },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            specs: { $arrayToObject: "$specs" },
+          },
+        },
+      ],
+    ];
+
+    const [result] = await this.productRepository.aggregate(pipeline);
+    return result;
   }
 
   async create(dto: CreateFullProductDto) {

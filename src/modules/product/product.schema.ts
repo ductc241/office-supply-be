@@ -17,6 +17,9 @@ export class Product {
   @Prop({ type: [String], default: [] })
   images: string[];
 
+  @Prop({ type: Object, default: {} })
+  specifications?: Record<string, string>;
+
   @Prop({ type: Types.ObjectId, ref: "Category", required: true })
   category: Types.ObjectId; // category cuối
 

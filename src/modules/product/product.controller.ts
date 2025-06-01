@@ -1,15 +1,11 @@
-import { Body, Controller, Get, Post, Query } from "@nestjs/common";
-import { ApiBearerAuth } from "@nestjs/swagger";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ProductService } from "./product.services";
-import { Pagination } from "src/shared/pagination/pagination.decorator";
 
 import { CreateFullProductDto } from "./dto/create-product.dto";
 import { QueryProductsDto } from "./dto/query-product";
-import {
-  ApiPagination,
-  IPagination,
-} from "src/shared/pagination/pagination.interface";
+
 @ApiBearerAuth()
 @Controller("products")
 export class ProductController {
@@ -20,17 +16,33 @@ export class ProductController {
     return await this.productService.create(dto);
   }
 
-  @ApiPagination()
-  @Get("query")
+  // @ApiPagination()
+  // @Get("query")
+  @Post("query")
   async query(
-    @Query() dto: QueryProductsDto,
-    @Pagination() pagination: IPagination,
+    // @Query() dto: QueryProductsDto,
+    @Body() dto: QueryProductsDto,
+    // @Pagination() pagination: IPagination,
   ) {
-    return await this.productService.query(dto, pagination);
+    // return await this.productService.query(dto, pagination);
+    return await this.productService.query(dto);
   }
 
-  @Get("available-product-variant/:id")
-  async getAvailableProductAttributes(@Query("id") id: string) {
-    return await this.productService.getAvailableProductAttributes(id);
+  @ApiOperation({
+    summary: "web - get product detail with all variants",
+  })
+  @Get("get-detail/:productId")
+  async getDetail(@Param("productId") productId: string) {
+    return await this.productService.getDetail(productId);
   }
+
+  @Get("get-specifications/:categoryId")
+  async getAvailableProductAttributes(@Query("categoryId") id: string) {
+    return await this.productService.getUniqueSpecValuesByCategory(id);
+  }
+
+  // @Get("available-product-variant/:id")
+  // async getAvailableProductAttributes(@Query("id") id: string) {
+  //   return await this.productService.getAvailableProductAttributes(id);
+  // }
 }
