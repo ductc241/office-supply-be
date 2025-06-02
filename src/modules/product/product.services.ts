@@ -28,6 +28,7 @@ export class ProductService {
       categoryIds,
       minPrice,
       maxPrice,
+      specifications,
       sort,
       page = 1,
       perPage = 10,
@@ -40,6 +41,12 @@ export class ProductService {
 
     if (name) {
       matchStage.name = { $regex: replaceQuerySearch(name), $options: "i" };
+    }
+
+    if (specifications) {
+      for (const key in specifications) {
+        matchStage[`specifications.${key}`] = { $in: specifications[key] };
+      }
     }
 
     if (categoryIds && categoryIds.length > 0) {
@@ -291,7 +298,7 @@ export class ProductService {
     ];
 
     const [result] = await this.productRepository.aggregate(pipeline);
-    return result;
+    return result ?? { specs: {} };
   }
 
   async create(dto: CreateFullProductDto) {
@@ -299,12 +306,12 @@ export class ProductService {
       const { product: productDto, variants } = dto;
 
       const category = await this.categoryService.findOne(productDto.category);
-      // if (category.level !== 2 || !category.is_leaf) {
-      //   throw new BadRequestException("Category must be a level 2 leaf node");
-      // }
+      if (category.level !== 2 || !category.is_leaf) {
+        throw new BadRequestException("Category must be a level 2 leaf node");
+      }
 
       if (variants.length > 1 && variants[0].attributes !== null) {
-        // Kiểm tra attributes là bắt buộc và không trùng nhau
+        // Kiểm tra variant attributes là bắt buộc và không trùng nhau
         const seenCombinations = new Set<string>();
 
         for (const v of variants) {

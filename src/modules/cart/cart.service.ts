@@ -45,7 +45,7 @@ export class CartService {
           name: variant.product.name,
           attributes: variant.attributes,
           stock: variant.product.stock,
-          price: variant.base_price,
+          base_price: variant.base_price,
         };
       });
 

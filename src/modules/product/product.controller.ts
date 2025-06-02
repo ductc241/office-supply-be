@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ProductService } from "./product.services";
@@ -16,6 +16,9 @@ export class ProductController {
     return await this.productService.create(dto);
   }
 
+  @ApiOperation({
+    summary: "web - query list product",
+  })
   // @ApiPagination()
   // @Get("query")
   @Post("query")
@@ -37,7 +40,7 @@ export class ProductController {
   }
 
   @Get("get-specifications/:categoryId")
-  async getAvailableProductAttributes(@Query("categoryId") id: string) {
+  async getAvailableProductAttributes(@Param("categoryId") id: string) {
     return await this.productService.getUniqueSpecValuesByCategory(id);
   }
 

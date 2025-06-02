@@ -4,6 +4,7 @@ import {
   IsEnum,
   IsMongoId,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Min,
@@ -24,7 +25,7 @@ export class QueryProductsDto extends BaseQueryDto {
   @ApiPropertyOptional({
     description: "Danh sách categoryId cần lọc",
     type: [String],
-    example: ["665abc..."],
+    example: [""],
   })
   @IsOptional()
   @Transform(({ value }) =>
@@ -48,12 +49,20 @@ export class QueryProductsDto extends BaseQueryDto {
   @Min(0)
   maxPrice?: number;
 
-  @IsEnum(ProductFilter)
+  @ApiPropertyOptional({
+    description: "Thuộc tính chung của sản phẩm",
+    example: { barre_material: [""], country_of_origin: [""] },
+  })
+  @IsOptional()
+  @IsObject()
+  specifications?: Record<string, string[]>;
+
   @ApiPropertyOptional({
     type: String,
     enum: ProductFilter,
     description: "Sắp xếp",
   })
   @IsOptional()
+  @IsEnum(ProductFilter)
   sort?: ProductFilter;
 }
