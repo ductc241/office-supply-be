@@ -65,10 +65,10 @@ export class CategoryController {
     return this.categoryService.getSibling(categoryId);
   }
 
-  // @Get("get-brands/:categoryId")
-  // getBrands(@Param("categoryId") categoryId: string) {
-  //   return this.categoryService.getRelatedBrands(categoryId);
-  // }
+  @Get("get-brands/:categoryId")
+  getBrands(@Param("categoryId") categoryId: string) {
+    return this.categoryService.getRelatedBrands(categoryId);
+  }
 
   // @Patch(":id")
   // update(@Param("id") id: string, @Body() updateBrandDto: UpdateBrandDto) {

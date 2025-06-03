@@ -25,6 +25,7 @@ export class ProductService {
   async query(
     {
       name,
+      brandIds,
       categoryIds,
       minPrice,
       maxPrice,
@@ -52,6 +53,12 @@ export class ProductService {
     if (categoryIds && categoryIds.length > 0) {
       matchStage.category = {
         $in: categoryIds.map((id) => new Types.ObjectId(id)),
+      };
+    }
+
+    if (brandIds && brandIds.length > 0) {
+      matchStage.brand = {
+        $in: brandIds.map((id) => new Types.ObjectId(id)),
       };
     }
 
