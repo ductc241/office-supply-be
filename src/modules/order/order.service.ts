@@ -81,7 +81,7 @@ export class OrderService {
       subtotal,
       discount,
       total,
-      coupon: dto.coupon || null,
+      coupon: new Types.ObjectId(dto.coupon) || null,
       shipping_fee: dto.shipping_fee,
       status: OrderStatus.PENDING,
       payment_method: dto.payment_method,
@@ -111,14 +111,17 @@ export class OrderService {
       {
         populate: [
           {
-            path: "product",
+            path: "items.product",
             select: "name image_preview",
           },
           {
-            path: "variant",
-            select: "sku attributes",
+            path: "items.variant",
+            select: "sku attributes base_price price is_coupon_applied",
           },
         ],
+        projection: {
+          user: 0,
+        },
       },
     );
 
@@ -127,7 +130,25 @@ export class OrderService {
   }
 
   async getOrdersForUser(userId: string) {
-    return this.orderRepository.find({ user: new Types.ObjectId(userId) });
+    return this.orderRepository.find(
+      { user: new Types.ObjectId(userId) },
+      {
+        populate: [
+          {
+            path: "items.product",
+            select: "name image_preview",
+          },
+        ],
+        projection: {
+          "items.product": 1,
+          status: 1,
+          subtotal: 1,
+          discount: 1,
+          total: 1,
+          createdAt: 1,
+        },
+      },
+    );
   }
 
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
@@ -142,6 +163,15 @@ export class OrderService {
 
     const order = await this.orderRepository.findById(orderId);
     if (!order) throw new NotFoundException("Order not found");
+
+    if (
+      dto.status === OrderStatus.PENDING &&
+      order.status !== OrderStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        "The transaction has been confirmed and cannot be changed.",
+      );
+    }
 
     if (order.coupon) {
       if (dto.status === OrderStatus.CANCELLED) {

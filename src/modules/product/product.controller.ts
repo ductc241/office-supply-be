@@ -16,9 +16,6 @@ export class ProductController {
     return await this.productService.create(dto);
   }
 
-  @ApiOperation({
-    summary: "web - query list product",
-  })
   // @ApiPagination()
   // @Get("query")
   @Post("query")
@@ -32,13 +29,17 @@ export class ProductController {
   }
 
   @ApiOperation({
-    summary: "web - get product detail with all variants",
+    summary:
+      "web - get product detail with all variants - work with category level 2",
   })
   @Get("get-detail/:productId")
   async getDetail(@Param("productId") productId: string) {
     return await this.productService.getDetail(productId);
   }
 
+  @ApiOperation({
+    summary: "web - get specification values for filter products",
+  })
   @Get("get-specifications/:categoryId")
   async getAvailableProductAttributes(@Param("categoryId") id: string) {
     return await this.productService.getUniqueSpecValuesByCategory(id);

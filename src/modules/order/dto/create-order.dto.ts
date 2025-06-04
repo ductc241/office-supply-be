@@ -1,5 +1,6 @@
 import {
   IsArray,
+  IsEnum,
   IsMongoId,
   IsNumber,
   IsOptional,
@@ -9,6 +10,7 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 import { ApiProperty } from "@nestjs/swagger";
+import { OrderPaymentType } from "../types/order.enum";
 
 export class OrderItemInputDto {
   @ApiProperty()
@@ -69,9 +71,9 @@ export class CreateOrderDto {
   @IsNumber()
   shipping_fee: number;
 
-  @ApiProperty()
-  @IsString()
-  payment_method: string;
+  @ApiProperty({ default: OrderPaymentType.COD })
+  @IsEnum(OrderPaymentType)
+  payment_method: OrderPaymentType;
 
   @ApiProperty()
   @IsString()

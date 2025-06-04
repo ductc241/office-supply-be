@@ -1,4 +1,8 @@
-import { BadRequestException, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { ProductRepository } from "../product/product.repository";
 import { CouponRepository } from "./coupon.repository";
 import { Types } from "mongoose";
@@ -6,6 +10,7 @@ import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
 import { CreateCouponDto } from "./dto/create-coupon.dto";
 import { CouponScope } from "./types/coupon.enum";
 
+@Injectable()
 export class CouponService {
   constructor(
     private readonly couponRepository: CouponRepository,
@@ -14,30 +19,35 @@ export class CouponService {
   ) {}
 
   async createCoupon(createCouponDto: CreateCouponDto) {
-    // Validate coupon data before creation
-    await this.validateCouponData(createCouponDto);
+    try {
+      // Validate coupon data before creation
+      await this.validateCouponData(createCouponDto);
 
-    // Check if coupon code already exists
-    const existingCoupon = await this.couponRepository.findOne({
-      code: createCouponDto.code.toUpperCase(),
-    });
+      // Check if coupon code already exists
+      const existingCoupon = await this.couponRepository.findOne({
+        code: createCouponDto.code.toUpperCase(),
+      });
 
-    if (existingCoupon) {
-      throw new BadRequestException("Mã coupon đã tồn tại");
+      if (existingCoupon) {
+        throw new BadRequestException("Mã coupon đã tồn tại");
+      }
+
+      // Prepare coupon data
+      const couponData = {
+        ...createCouponDto,
+        code: createCouponDto.code.toUpperCase(), // Ensure uppercase
+        min_order_value: createCouponDto.min_order_value || 0,
+        user_limit: createCouponDto.user_limit || 1,
+        used: 0,
+        is_active: createCouponDto.is_active ?? true,
+        combinable: createCouponDto.combinable ?? false,
+      };
+
+      return this.couponRepository.create(couponData);
+    } catch (error) {
+      console.log(error);
+      throw error;
     }
-
-    // Prepare coupon data
-    const couponData = {
-      ...createCouponDto,
-      code: createCouponDto.code.toUpperCase(), // Ensure uppercase
-      min_order_value: createCouponDto.min_order_value || 0,
-      user_limit: createCouponDto.user_limit || 1,
-      used: 0,
-      is_active: createCouponDto.is_active ?? true,
-      combinable: createCouponDto.combinable ?? false,
-    };
-
-    return this.couponRepository.create(couponData);
   }
 
   private async validateCouponData(couponData: CreateCouponDto) {
@@ -236,7 +246,7 @@ export class CouponService {
   }
 
   private async filterEligibleItems(coupon: any, items: any[]) {
-    if (coupon.scope === "all") return items;
+    if (coupon.scope === CouponScope.ORDER) return items;
 
     if (coupon.scope === CouponScope.PRODUCT) {
       const validProductIds = (coupon.products || []).map((id) =>

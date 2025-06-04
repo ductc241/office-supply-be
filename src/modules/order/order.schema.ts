@@ -1,6 +1,6 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
-import { OrderStatus } from "./types/order.enum";
+import { OrderPaymentType, OrderStatus } from "./types/order.enum";
 @Schema({ _id: false })
 class OrderItem {
   @Prop({ type: Types.ObjectId, ref: "Product", required: true })
@@ -28,7 +28,7 @@ class OrderItem {
   discount_from_coupon?: number; // tổng giảm được từ coupon
 
   @Prop({ require: true })
-  price: number; // Giá thực tế (có thể giảm nếu áp dụng coupon)
+  price: number; // Giá bán thực tế (có thể giảm nếu áp dụng coupon)
 
   @Prop({ default: false })
   is_coupon_applied?: boolean; // Áp dụng đối với product coupon
@@ -67,8 +67,8 @@ export class Order {
   })
   status: OrderStatus;
 
-  @Prop({ require: true })
-  payment_method: string;
+  @Prop({ enum: OrderPaymentType, require: true })
+  payment_method: OrderPaymentType;
 
   @Prop({ require: true })
   shipping_method: string;
