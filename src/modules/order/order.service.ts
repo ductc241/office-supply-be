@@ -10,6 +10,7 @@ import { ProductVariantRepository } from "../product-variant/product-variant.rep
 import { CouponService } from "../coupon/coupon.service";
 import { Types } from "mongoose";
 import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
+import { OrderStatus } from "./types/order.enum";
 
 @Injectable()
 export class OrderService {
@@ -82,7 +83,7 @@ export class OrderService {
       total,
       coupon: dto.coupon || null,
       shipping_fee: dto.shipping_fee,
-      status: "pending",
+      status: OrderStatus.PENDING,
       payment_method: dto.payment_method,
       shipping_method: dto.shipping_method,
       shipping_address: dto.shipping_address,
@@ -101,48 +102,71 @@ export class OrderService {
     return order;
   }
 
+  async getOrderDetail(userId: string, orderId: string) {
+    const order = await this.orderRepository.find(
+      {
+        _id: new Types.ObjectId(orderId),
+        user: new Types.ObjectId(userId),
+      },
+      {
+        populate: [
+          {
+            path: "product",
+            select: "name image_preview",
+          },
+          {
+            path: "variant",
+            select: "sku attributes",
+          },
+        ],
+      },
+    );
+
+    if (!order) throw new NotFoundException("Order not found");
+    return order;
+  }
+
+  async getOrdersForUser(userId: string) {
+    return this.orderRepository.find({ user: new Types.ObjectId(userId) });
+  }
+
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
     const now = new Date();
     const update: any = { status: dto.status };
 
-    if (dto.status === "paid") update.paid_at = now;
-    if (dto.status === "shipping") update.shipped_at = now;
-    if (dto.status === "delivered") update.completed_at = now;
+    if (dto.status === OrderStatus.PAID) update.paid_at = now;
+    if (dto.status === OrderStatus.SHIPPING) update.shipped_at = now;
+    if (dto.status === OrderStatus.DELIVERED) update.completed_at = now;
+    if (dto.status === OrderStatus.CANCELLED) update.cancelled_at = now;
+    if (dto.status === OrderStatus.REFUNDED) update.refunded_at = now;
 
-    if (dto.status === "cancelled") {
-      update.cancelled_at = now;
-      const order = await this.orderRepository.findById(orderId);
-      if (order?.coupon) {
+    const order = await this.orderRepository.findById(orderId);
+    if (!order) throw new NotFoundException("Order not found");
+
+    if (order.coupon) {
+      if (dto.status === OrderStatus.CANCELLED) {
         await this.couponUsageService.markAsCancelled(orderId);
         await this.couponService.restoreCouponUsage(order.coupon.toString());
+      }
+
+      if (dto.status === OrderStatus.REFUNDED) {
+        await this.couponUsageService.markAsRefunded(orderId);
       }
     }
 
     return this.orderRepository.updateById(orderId, update);
   }
 
-  async getOrderById(orderId: string) {
-    const order = await this.orderRepository.findById(orderId);
-    if (!order) throw new NotFoundException("Order not found");
-    return order;
-  }
-
-  async listOrdersForUser(userId: string) {
-    return this.orderRepository.find({ user: new Types.ObjectId(userId) });
-  }
-
-  async listOrders(filter: any) {
-    return this.orderRepository.find(filter);
-  }
-
   async cancelOrder(orderId: string, userId: string) {
     const order = await this.orderRepository.findById(orderId);
+
     if (!order || order.user.toString() !== userId) {
       throw new NotFoundException("Order not found or not authorized");
     }
-    if (order.status !== "pending") {
+
+    if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException("Only pending orders can be cancelled");
     }
-    return this.updateStatus(orderId, { status: "cancelled" });
+    return this.updateStatus(orderId, { status: OrderStatus.CANCELLED });
   }
 }

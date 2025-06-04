@@ -1,16 +1,17 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument } from "mongoose";
+import { CouponScope, CouponType } from "./types/coupon.enum";
 
 @Schema({ timestamps: true })
 export class Coupon {
   @Prop({ required: true, unique: true })
   code: string;
 
-  @Prop({ required: true, enum: ["order", "category", "product"] })
-  scope: "order" | "category" | "product";
+  @Prop({ required: true, enum: CouponScope })
+  scope: CouponScope;
 
-  @Prop({ required: true, enum: ["percent", "amount"] })
-  discount_type: "percent" | "amount";
+  @Prop({ required: true, enum: CouponType })
+  discount_type: CouponType;
 
   @Prop({ required: true })
   value: number;

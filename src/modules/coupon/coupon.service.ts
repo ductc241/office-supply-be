@@ -3,6 +3,8 @@ import { ProductRepository } from "../product/product.repository";
 import { CouponRepository } from "./coupon.repository";
 import { Types } from "mongoose";
 import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
+import { CreateCouponDto } from "./dto/create-coupon.dto";
+import { CouponScope } from "./types/coupon.enum";
 
 export class CouponService {
   constructor(
@@ -11,10 +13,174 @@ export class CouponService {
     private readonly couponUsageService: CouponUsageService,
   ) {}
 
+  async createCoupon(createCouponDto: CreateCouponDto) {
+    // Validate coupon data before creation
+    await this.validateCouponData(createCouponDto);
+
+    // Check if coupon code already exists
+    const existingCoupon = await this.couponRepository.findOne({
+      code: createCouponDto.code.toUpperCase(),
+    });
+
+    if (existingCoupon) {
+      throw new BadRequestException("Mã coupon đã tồn tại");
+    }
+
+    // Prepare coupon data
+    const couponData = {
+      ...createCouponDto,
+      code: createCouponDto.code.toUpperCase(), // Ensure uppercase
+      min_order_value: createCouponDto.min_order_value || 0,
+      user_limit: createCouponDto.user_limit || 1,
+      used: 0,
+      is_active: createCouponDto.is_active ?? true,
+      combinable: createCouponDto.combinable ?? false,
+    };
+
+    return this.couponRepository.create(couponData);
+  }
+
+  private async validateCouponData(couponData: CreateCouponDto) {
+    const errors: string[] = [];
+
+    // Basic validation
+    if (!couponData.code || couponData.code.trim().length === 0) {
+      errors.push("Mã coupon không được để trống");
+    }
+
+    if (couponData.code && couponData.code.length < 3) {
+      errors.push("Mã coupon phải có ít nhất 3 ký tự");
+    }
+
+    if (couponData.code && couponData.code.length > 50) {
+      errors.push("Mã coupon không được quá 50 ký tự");
+    }
+
+    // Validate code format (alphanumeric and some special chars)
+    if (couponData.code && !/^[A-Za-z0-9_-]+$/.test(couponData.code)) {
+      errors.push(
+        "Mã coupon chỉ được chứa chữ cái, số, gạch dưới và gạch ngang",
+      );
+    }
+
+    // Validate value
+    if (couponData.value <= 0) {
+      errors.push("Giá trị giảm giá phải lớn hơn 0");
+    }
+
+    if (couponData.discount_type === "percent" && couponData.value > 100) {
+      errors.push("Phần trăm giảm giá không được vượt quá 100%");
+    }
+
+    // Validate max_discount
+    if (couponData.max_discount < 0) {
+      errors.push("Số tiền giảm tối đa không được âm");
+    }
+
+    if (
+      couponData.discount_type === "percent" &&
+      couponData.max_discount <= 0
+    ) {
+      errors.push("Số tiền giảm tối đa phải lớn hơn 0 khi dùng phần trăm");
+    }
+
+    if (
+      couponData.user_limit &&
+      couponData.user_limit > couponData.usage_limit
+    ) {
+      errors.push(
+        "Số lần sử dụng trên mỗi user không được vượt quá tổng số lần sử dụng",
+      );
+    }
+
+    // Validate dates
+    const now = new Date();
+    const validFrom = new Date(couponData.valid_from);
+    const validUntil = new Date(couponData.valid_until);
+
+    if (isNaN(validFrom.getTime())) {
+      errors.push("Ngày bắt đầu không hợp lệ");
+    }
+
+    if (isNaN(validUntil.getTime())) {
+      errors.push("Ngày kết thúc không hợp lệ");
+    }
+
+    if (validFrom >= validUntil) {
+      errors.push("Ngày kết thúc phải sau ngày bắt đầu");
+    }
+
+    if (validUntil <= now) {
+      errors.push("Ngày kết thúc phải trong tương lai");
+    }
+
+    // Validate scope-specific data
+    if (couponData.scope === CouponScope.PRODUCT) {
+      if (
+        !couponData.applicable_product_ids ||
+        couponData.applicable_product_ids.length === 0
+      ) {
+        errors.push(
+          "Phải chỉ định ít nhất một sản phẩm khi scope là 'product'",
+        );
+      } else {
+        // Validate product IDs exist
+        const validProductIds: string[] = [];
+        for (const productId of couponData.applicable_product_ids) {
+          if (!Types.ObjectId.isValid(productId)) {
+            errors.push(`ID sản phẩm không hợp lệ: ${productId}`);
+          } else {
+            validProductIds.push(productId);
+          }
+        }
+
+        // if (validProductIds.length > 0) {
+        //   const existingProducts = await this.productRepository.find({
+        //     _id: { $in: validProductIds.map((id) => new Types.ObjectId(id)) },
+        //   });
+
+        //   if (existingProducts.length !== validProductIds.length) {
+        //     errors.push("Một số sản phẩm được chỉ định không tồn tại");
+        //   }
+        // }
+      }
+    }
+
+    if (couponData.scope === CouponScope.CATEGORY) {
+      if (
+        !couponData.applicable_category_ids ||
+        couponData.applicable_category_ids.length === 0
+      ) {
+        errors.push(
+          "Phải chỉ định ít nhất một danh mục khi scope là 'category'",
+        );
+      } else {
+        // Validate category IDs format
+        for (const categoryId of couponData.applicable_category_ids) {
+          if (!Types.ObjectId.isValid(categoryId)) {
+            errors.push(`ID danh mục không hợp lệ: ${categoryId}`);
+          }
+        }
+        // Note: Add category existence validation if you have CategoryRepository
+      }
+    }
+
+    if (errors.length > 0) {
+      throw new BadRequestException({
+        message: "Dữ liệu coupon không hợp lệ",
+        errors,
+      });
+    }
+  }
+
   async validateCoupon(couponId: string, userId: string, items: any[]) {
     const coupon = await this.couponRepository.findById(couponId);
     if (!coupon) {
       throw new NotFoundException("Coupon not found");
+    }
+
+    if (!coupon.is_active) {
+      throw new BadRequestException("Coupon đã bị vô hiệu hóa");
     }
 
     const now = new Date();
@@ -26,7 +192,6 @@ export class CouponService {
       throw new BadRequestException("Coupon usage limit exceeded");
     }
 
-    // Check if per-user limit is exceeded
     const usageCount = await this.couponUsageService.countUsageByUser(
       userId,
       couponId,
@@ -48,6 +213,13 @@ export class CouponService {
       0,
     );
 
+    // Check minimum order value
+    if (coupon.min_order_value > 0 && matchedTotal < coupon.min_order_value) {
+      throw new BadRequestException(
+        `Đơn hàng phải có giá trị tối thiểu ${coupon.min_order_value.toLocaleString("vi-VN")}đ để sử dụng coupon`,
+      );
+    }
+
     let discount = 0;
 
     if (coupon.discount_type === "percent") {
@@ -66,7 +238,7 @@ export class CouponService {
   private async filterEligibleItems(coupon: any, items: any[]) {
     if (coupon.scope === "all") return items;
 
-    if (coupon.scope === "product") {
+    if (coupon.scope === CouponScope.PRODUCT) {
       const validProductIds = (coupon.products || []).map((id) =>
         id.toString(),
       );
@@ -75,7 +247,7 @@ export class CouponService {
       );
     }
 
-    if (coupon.scope === "category") {
+    if (coupon.scope === CouponScope.CATEGORY) {
       const productIds = items.map((item) => new Types.ObjectId(item.product));
       const products = await this.productRepository.find({
         _id: { $in: productIds },
@@ -101,7 +273,7 @@ export class CouponService {
 
   async markCouponAsUsed(couponId: string) {
     return this.couponRepository.updateById(couponId, {
-      $inc: { used_count: 1 },
+      $inc: { used: 1 },
     });
   }
 

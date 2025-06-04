@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Types } from "mongoose";
 import { CouponUsageRepository } from "./coupon-usage.repository";
 
@@ -33,11 +37,28 @@ export class CouponUsageService {
 
   async markAsRefunded(orderId: string) {
     const usage = await this.couponUsageRepository.findOne({ order: orderId });
-    if (!usage) throw new NotFoundException("Coupon usage not found");
-    return this.couponUsageRepository.updateById(usage._id, {
+    if (!usage) {
+      throw new NotFoundException("Coupon usage not found");
+    }
+
+    if (usage.status !== "used") {
+      throw new BadRequestException(
+        `Cannot refund coupon usage with status: ${usage.status}`,
+      );
+    }
+
+    // Cập nhật trạng thái và thời gian hoàn tiền
+    await this.couponUsageRepository.updateById(usage._id, {
       status: "refunded",
       refunded_at: new Date(),
     });
+
+    // Nếu hệ thống cho phép user sử dụng lại coupon sau refund:
+    // await this.couponRepository.updateById(usage.coupon.toString(), {
+    //   $inc: { used_count: -1 },
+    // });
+
+    return true;
   }
 
   async getUsageByUser(userId: string) {

@@ -35,18 +35,18 @@ export class CategoryController {
     return this.categoryService.query();
   }
 
-  @Get("get-tree")
   @ApiOperation({
     summary: "web - get category list in tree form",
   })
+  @Get("get-tree")
   getTree() {
     return this.categoryService.getTree();
   }
 
-  @Get("get-detail/:categoryId")
   @ApiOperation({
     summary: "web - get category detail with child categories",
   })
+  @Get("get-detail/:categoryId")
   getDetail(@Param("categoryId") categoryId: string) {
     return this.categoryService.getDetail(categoryId);
   }
@@ -56,11 +56,11 @@ export class CategoryController {
   //   return this.categoryService.getChild(categoryId);
   // }
 
-  @Get("get-sibling/:categoryId")
   @ApiOperation({
     summary:
       "web - get the list of sibling categories that share the same parent.",
   })
+  @Get("get-sibling/:categoryId")
   getSibling(@Param("categoryId") categoryId: string) {
     return this.categoryService.getSibling(categoryId);
   }

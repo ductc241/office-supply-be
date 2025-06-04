@@ -1,7 +1,10 @@
-import { IsIn, IsString } from "class-validator";
+import { IsEnum, IsString } from "class-validator";
+import { OrderStatus } from "../types/order.enum";
+import { ApiProperty } from "@nestjs/swagger";
 
 export class UpdateOrderStatusDto {
+  @ApiProperty({ example: OrderStatus.PAID })
   @IsString()
-  @IsIn(["paid", "shipping", "delivered", "cancelled"])
-  status: string;
+  @IsEnum(OrderStatus)
+  status: OrderStatus;
 }
