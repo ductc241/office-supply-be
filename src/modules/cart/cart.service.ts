@@ -23,9 +23,10 @@ export class CartService {
 
             populate: {
               path: "product",
-              select: "name",
+              select: "name image_preview",
             },
           },
+          projection: "user items",
         },
       );
 
@@ -41,6 +42,7 @@ export class CartService {
         return {
           variant_id: variant._id,
           product_id: variant.product._id,
+          image: variant.product.image_preview,
           quantity: item.quantity,
           name: variant.product.name,
           attributes: variant.attributes,
@@ -98,9 +100,7 @@ export class CartService {
       );
     }
 
-    const updatedCart = await this.cartRepositoy.findOne({
-      user: userObjectId,
-    });
+    const updatedCart = await this.get(userId);
     return updatedCart.items;
   }
 
