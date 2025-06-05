@@ -292,4 +292,33 @@ export class CouponService {
       $inc: { used_count: -1 },
     });
   }
+
+  async getAvailableCouponsForUser(userId: string) {
+    const now = new Date();
+
+    const coupons = await this.couponRepository.find({
+      is_active: true,
+      valid_from: { $lte: now },
+      valid_until: { $gte: now },
+      $expr: {
+        $lt: ["$used", "$usage_limit"],
+      },
+    });
+
+    const available: any[] = [];
+
+    for (const coupon of coupons) {
+      // Đếm số lần user này đã dùng mã này
+      const usageCount = await this.couponUsageService.countUsageByUser(
+        userId,
+        coupon._id.toString(),
+      );
+
+      if (usageCount < coupon.user_limit) {
+        available.push(coupon);
+      }
+    }
+
+    return available;
+  }
 }

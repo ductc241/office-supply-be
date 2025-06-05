@@ -88,7 +88,7 @@ export class CreateCouponDto {
   @Type(() => Boolean)
   is_active?: boolean;
 
-  @ApiProperty()
+  @ApiProperty({ example: false })
   @IsOptional()
   @IsBoolean()
   @Type(() => Boolean)

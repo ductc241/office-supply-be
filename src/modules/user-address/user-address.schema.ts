@@ -7,28 +7,25 @@ import { HydratedDocument, Types } from "mongoose";
 })
 export class UserAddress {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
-  userId: Types.ObjectId;
+  user: Types.ObjectId;
 
   @Prop()
   label: string;
 
   @Prop()
-  recipientName: string;
+  fullname: string;
+
+  @Prop()
+  email: string;
 
   @Prop()
   phone: string;
 
   @Prop()
-  addressLine: string;
+  address_line_1: string;
 
   @Prop()
-  ward: string;
-
-  @Prop()
-  district: string;
-
-  @Prop()
-  city: string;
+  address_line_2: string;
 
   @Prop({ default: false })
   isDefault: boolean;
