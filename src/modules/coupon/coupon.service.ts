@@ -233,7 +233,13 @@ export class CouponService {
     let discount = 0;
 
     if (coupon.discount_type === "percent") {
-      discount = Math.floor((matchedTotal * coupon.value) / 100);
+      const tempDiscount = Math.floor((matchedTotal * coupon.value) / 100);
+
+      if (tempDiscount > coupon.max_discount) {
+        discount = coupon.max_discount;
+      } else {
+        discount = tempDiscount;
+      }
     } else if (coupon.discount_type === "amount") {
       discount = Math.min(coupon.value, matchedTotal);
     }
@@ -249,9 +255,10 @@ export class CouponService {
     if (coupon.scope === CouponScope.ORDER) return items;
 
     if (coupon.scope === CouponScope.PRODUCT) {
-      const validProductIds = (coupon.products || []).map((id) =>
+      const validProductIds = (coupon.applicable_product_ids || []).map((id) =>
         id.toString(),
       );
+
       return items.filter((item) =>
         validProductIds.includes(item.product.toString()),
       );

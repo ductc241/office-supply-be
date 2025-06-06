@@ -44,10 +44,10 @@ export class OrderService {
         variant: variant._id,
         base_price: basePrice,
         cost_price_at_time: variant.average_cost_price || 0,
-        price: basePrice,
         quantity: item.quantity,
-        is_coupon_applied: false,
+        price: basePrice,
         discount_from_coupon: 0,
+        is_coupon_applied: false,
       };
     });
 
@@ -58,18 +58,23 @@ export class OrderService {
         userId,
         orderItems,
       );
-      discount = result.discount;
 
-      const totalLinePrice = orderItems.reduce(
+      discount = result.discount;
+      const matchedItemIds = result.matchedItems.map((item) => item.variant);
+      const totalLinePrice = result.matchedItems.reduce(
         (s, i) => s + i.price * i.quantity,
         0,
       );
+
       orderItems.forEach((item) => {
         const itemTotal = item.price * item.quantity;
         const ratio = itemTotal / totalLinePrice;
-        item.discount_from_coupon = Math.round(discount * ratio);
-        item.price -= item.discount_from_coupon / item.quantity;
-        item.is_coupon_applied = true;
+
+        if (matchedItemIds.includes(item.variant)) {
+          item.price -= item.discount_from_coupon / item.quantity;
+          item.discount_from_coupon = Math.round(discount * ratio);
+          item.is_coupon_applied = true;
+        }
       });
     }
 

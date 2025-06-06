@@ -103,6 +103,7 @@ export class CategoryService {
       return { data: category, children: childCategories };
     } catch (error) {
       console.log(error);
+      throw error;
     }
   }
 
