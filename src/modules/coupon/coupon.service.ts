@@ -313,18 +313,14 @@ export class CouponService {
         },
       },
       {
-        // populate: {
-        //   path: "applicable_product_ids",
-        //   select: "name",
-        // },
-        projection: "label image_preview max_discount user_limit",
+        projection:
+          "label image_preview max_discount min_order_value user_limit used discount_type value valid_until",
       },
     );
 
     const available: any[] = [];
 
     for (const coupon of coupons) {
-      // Đếm số lần user này đã dùng mã này
       const usageCount = await this.couponUsageService.countUsageByUser(
         userId,
         coupon._id.toString(),
@@ -338,9 +334,19 @@ export class CouponService {
     return available;
   }
 
+  // async getAppliableCouponsForUser(userId: string) {}
+
   async getCouponDetail(couponId) {
-    return await this.couponRepository.findOne({
-      _id: couponId,
-    });
+    return await this.couponRepository.findOne(
+      {
+        _id: couponId,
+      },
+      {
+        populate: {
+          path: "applicable_product_ids",
+          select: "name",
+        },
+      },
+    );
   }
 }
