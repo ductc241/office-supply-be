@@ -108,7 +108,7 @@ export class OrderService {
   }
 
   async getOrderDetail(userId: string, orderId: string) {
-    const order = await this.orderRepository.find(
+    const order = await this.orderRepository.findOne(
       {
         _id: new Types.ObjectId(orderId),
         user: new Types.ObjectId(userId),

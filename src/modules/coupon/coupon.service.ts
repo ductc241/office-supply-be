@@ -35,7 +35,7 @@ export class CouponService {
       // Prepare coupon data
       const couponData = {
         ...createCouponDto,
-        code: createCouponDto.code.toUpperCase(), // Ensure uppercase
+        code: createCouponDto.code.toUpperCase(),
         min_order_value: createCouponDto.min_order_value || 0,
         user_limit: createCouponDto.user_limit || 1,
         used: 0,
@@ -303,14 +303,23 @@ export class CouponService {
   async getAvailableCouponsForUser(userId: string) {
     const now = new Date();
 
-    const coupons = await this.couponRepository.find({
-      is_active: true,
-      valid_from: { $lte: now },
-      valid_until: { $gte: now },
-      $expr: {
-        $lt: ["$used", "$usage_limit"],
+    const coupons = await this.couponRepository.find(
+      {
+        is_active: true,
+        valid_from: { $lte: now },
+        valid_until: { $gte: now },
+        $expr: {
+          $lt: ["$used", "$usage_limit"],
+        },
       },
-    });
+      {
+        // populate: {
+        //   path: "applicable_product_ids",
+        //   select: "name",
+        // },
+        projection: "label image_preview max_discount user_limit",
+      },
+    );
 
     const available: any[] = [];
 
@@ -327,5 +336,11 @@ export class CouponService {
     }
 
     return available;
+  }
+
+  async getCouponDetail(couponId) {
+    return await this.couponRepository.findOne({
+      _id: couponId,
+    });
   }
 }

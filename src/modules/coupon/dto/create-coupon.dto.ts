@@ -20,6 +20,15 @@ export class CreateCouponDto {
   @MaxLength(10, { message: "Code không được vượt quá 10 ký tự." })
   code: string;
 
+  @ApiProperty({ example: "Coupon for special event" })
+  @IsString()
+  label: string;
+
+  @ApiProperty()
+  @IsOptional()
+  @IsString()
+  image_preview?: string;
+
   @ApiProperty({ example: CouponScope.ORDER })
   @IsEnum(CouponScope)
   scope: CouponScope;

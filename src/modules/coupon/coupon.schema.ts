@@ -7,6 +7,12 @@ export class Coupon {
   @Prop({ required: true, unique: true })
   code: string;
 
+  @Prop({ required: true })
+  label: string;
+
+  @Prop({ default: null })
+  image_preview: string;
+
   @Prop({ required: true, enum: CouponScope })
   scope: CouponScope;
 
@@ -37,7 +43,7 @@ export class Coupon {
   @Prop({ required: true })
   valid_until: Date;
 
-  @Prop({ type: [String], default: null })
+  @Prop({ type: [String], ref: "Product", default: null })
   applicable_product_ids: string[] | null;
 
   @Prop({ type: [String], default: null })

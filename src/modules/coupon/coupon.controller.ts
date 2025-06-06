@@ -1,8 +1,8 @@
-import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, UseGuards } from "@nestjs/common";
 import { CouponService } from "./coupon.service";
 import { CreateCouponDto } from "./dto/create-coupon.dto";
 import { User } from "src/shared/decorator/current-user.decorator";
-import { ApiBearerAuth } from "@nestjs/swagger";
+import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 import { AuthGuard } from "../auth/auth.guard";
 
 @ApiBearerAuth()
@@ -16,6 +16,12 @@ export class CouponController {
     return await this.couponService.createCoupon(dto);
   }
 
+  @Get("/get-detail/:couponId")
+  async get(@Param("couponId") couponId: string) {
+    return await this.couponService.getCouponDetail(couponId);
+  }
+
+  @ApiOperation({ summary: "web - get coupons available to users" })
   @Get("/get-available-coupon")
   async getAvailableCouponsForUser(@User() user) {
     return await this.couponService.getAvailableCouponsForUser(user.sub);
