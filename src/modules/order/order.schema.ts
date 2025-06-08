@@ -92,6 +92,7 @@ export class Order {
     type: {
       full_name: String,
       phone: String,
+      email: String,
       address_line_1: String,
       address_line_2: String,
       postal_code: String,

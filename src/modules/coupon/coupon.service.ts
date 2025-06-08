@@ -9,6 +9,7 @@ import { Types } from "mongoose";
 import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
 import { CreateCouponDto } from "./dto/create-coupon.dto";
 import { CouponScope } from "./types/coupon.enum";
+import { CartService } from "../cart/cart.service";
 
 @Injectable()
 export class CouponService {
@@ -16,6 +17,7 @@ export class CouponService {
     private readonly couponRepository: CouponRepository,
     private readonly productRepository: ProductRepository,
     private readonly couponUsageService: CouponUsageService,
+    private readonly cartService: CartService,
   ) {}
 
   async createCoupon(createCouponDto: CreateCouponDto) {
@@ -314,7 +316,7 @@ export class CouponService {
       },
       {
         projection:
-          "label image_preview max_discount min_order_value user_limit used discount_type value valid_until",
+          "label image_preview max_discount min_order_value usage_limit used user_limit discount_type value valid_until",
       },
     );
 
@@ -334,7 +336,44 @@ export class CouponService {
     return available;
   }
 
-  // async getAppliableCouponsForUser(userId: string) {}
+  async getAppliableCouponsForUserCart(userId: string) {
+    const cart = await this.cartService.get(userId);
+    const cartItems = cart.items;
+
+    if (!cartItems || cartItems.length === 0) {
+      throw new BadRequestException("Giỏ hàng hiện đang trống.");
+    }
+
+    const availableCoupons = await this.getAvailableCouponsForUser(userId);
+
+    const applicableCoupons = [];
+
+    for (const coupon of availableCoupons) {
+      try {
+        const result = await this.validateCoupon(coupon._id, userId, cartItems);
+
+        if (result && result.discount > 0) {
+          applicableCoupons.push({
+            _id: result.coupon._id,
+            label: result.coupon.label,
+            image_preview: result.coupon.image_preview,
+            discount_type: result.coupon.discount_type,
+            value: result.coupon.value,
+            max_discount: result.coupon.max_discount,
+            min_order_value: result.coupon.min_order_value,
+            usage_limit: result.coupon.usage_limit,
+            user_limit: result.coupon.user_limit,
+            used: result.coupon.used,
+            valid_until: result.coupon.valid_until,
+          });
+        }
+      } catch (_) {
+        // Bỏ qua coupon không hợp lệ
+      }
+    }
+
+    return applicableCoupons;
+  }
 
   async getCouponDetail(couponId) {
     return await this.couponRepository.findOne(
@@ -348,5 +387,32 @@ export class CouponService {
         },
       },
     );
+  }
+
+  async applyCouponForCart(userId: string, couponId: string) {
+    const coupon = await this.couponRepository.findById(couponId);
+
+    if (!coupon) {
+      throw new NotFoundException("Không tìm thấy mã giảm giá");
+    }
+
+    const cart = await this.cartService.get(userId);
+    const cartItems = cart.items;
+
+    if (!cartItems || cartItems.length === 0) {
+      throw new BadRequestException("Giỏ hàng hiện đang trống.");
+    }
+
+    const result = await this.validateCoupon(
+      coupon._id.toString(),
+      userId,
+      cartItems,
+    );
+
+    return {
+      coupon: result.coupon,
+      discount: result.discount,
+      matchedItems: result.matchedItems,
+    };
   }
 }

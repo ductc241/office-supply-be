@@ -30,6 +30,10 @@ export class ShippingAddressDto {
 
   @ApiProperty()
   @IsString()
+  email: string;
+
+  @ApiProperty()
+  @IsString()
   phone: string;
 
   @ApiProperty()

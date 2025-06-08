@@ -7,6 +7,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { Coupon, CouponSchema } from "./coupon.schema";
 import { CouponUsageModule } from "../coupon-usage/coupon-usage.module";
 import { CouponController } from "./coupon.controller";
+import { CartModule } from "../cart/cart.module";
 
 @Module({
   providers: [CouponRepository, CouponService],
@@ -15,6 +16,7 @@ import { CouponController } from "./coupon.controller";
     MongooseModule.forFeature([{ name: Coupon.name, schema: CouponSchema }]),
     ProductModule,
     CouponUsageModule,
+    CartModule,
   ],
   exports: [CouponRepository, CouponService],
 })

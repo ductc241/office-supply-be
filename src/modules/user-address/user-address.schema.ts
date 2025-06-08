@@ -9,22 +9,22 @@ export class UserAddress {
   @Prop({ type: Types.ObjectId, ref: "User", required: true })
   user: Types.ObjectId;
 
-  @Prop()
+  @Prop({ required: true })
   label: string;
 
-  @Prop()
+  @Prop({ required: true })
   fullname: string;
 
-  @Prop()
+  @Prop({ required: true })
   email: string;
 
-  @Prop()
+  @Prop({ required: true })
   phone: string;
 
-  @Prop()
+  @Prop({ required: true })
   address_line_1: string;
 
-  @Prop()
+  @Prop({ required: true })
   address_line_2: string;
 
   @Prop({ default: false })

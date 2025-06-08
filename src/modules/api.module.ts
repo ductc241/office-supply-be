@@ -8,6 +8,7 @@ import { CartModule } from "./cart/cart.module";
 import { AuthModule } from "./auth/auth.module";
 import { CouponModule } from "./coupon/coupon.module";
 import { OrderModule } from "./order/order.module";
+import { UserAddressModule } from "./user-address/user-address.module";
 
 @Module({
   imports: [
@@ -17,6 +18,7 @@ import { OrderModule } from "./order/order.module";
     ProductModule,
     ProductVariantModule,
     UserModule,
+    UserAddressModule,
     CartModule,
     CouponModule,
     OrderModule,

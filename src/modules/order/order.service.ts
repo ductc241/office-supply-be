@@ -138,14 +138,27 @@ export class OrderService {
     return this.orderRepository.find(
       { user: new Types.ObjectId(userId) },
       {
+        sort: "-createdAt",
         populate: [
           {
             path: "items.product",
             select: "name image_preview",
           },
+          {
+            path: "items.variant",
+            select: "attributes",
+          },
         ],
         projection: {
-          "items.product": 1,
+          items: {
+            product: 1,
+            variant: 1,
+            quantity: 1,
+            base_price: 1,
+            discount_from_coupon: 1,
+            price: 1,
+            is_coupon_applied: 1,
+          },
           status: 1,
           subtotal: 1,
           discount: 1,
