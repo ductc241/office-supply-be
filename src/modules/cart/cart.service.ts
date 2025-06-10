@@ -70,7 +70,7 @@ export class CartService {
     return this.cartRepositoy.save(cart);
   }
 
-  async add(userId: string, dto: AddCartItemDto) {
+  async increase(userId: string, dto: AddCartItemDto) {
     const userObjectId = new Types.ObjectId(userId);
     const variantObjectId = new Types.ObjectId(dto.variant_id);
 
@@ -104,9 +104,9 @@ export class CartService {
     return updatedCart.items;
   }
 
-  async decrease(user_id: string, item_id: string, dto: DecreaseCartItemDto) {
+  async decrease(user_id: string, dto: DecreaseCartItemDto) {
     const userObjectId = new Types.ObjectId(user_id);
-    const variantObjectId = new Types.ObjectId(item_id);
+    const variantObjectId = new Types.ObjectId(dto.variant_id);
 
     const cart = await this.cartRepositoy.findOne({ user: userObjectId });
     if (!cart) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);

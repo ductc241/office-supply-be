@@ -26,6 +26,7 @@ export class ProductService {
     {
       name,
       brandIds,
+      productIds,
       categoryIds,
       minPrice,
       maxPrice,
@@ -59,6 +60,12 @@ export class ProductService {
     if (brandIds && brandIds.length > 0) {
       matchStage.brand = {
         $in: brandIds.map((id) => new Types.ObjectId(id)),
+      };
+    }
+
+    if (productIds && productIds.length > 0) {
+      matchStage._id = {
+        $in: productIds.map((id) => new Types.ObjectId(id)),
       };
     }
 

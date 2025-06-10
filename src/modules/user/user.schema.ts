@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
-import { HydratedDocument } from "mongoose";
+import { HydratedDocument, Types } from "mongoose";
 
 @Schema({
   timestamps: true,
@@ -40,6 +40,12 @@ export class User {
 
   @Prop({ type: Date })
   last_login_at: Date;
+
+  @Prop({ type: Types.ObjectId, ref: "Product", default: [] })
+  product_favourites: Types.ObjectId[];
+
+  @Prop({ type: Types.ObjectId, ref: "Product", default: [] })
+  view_history: Types.ObjectId[];
 
   // @Prop({ enum: ["bronze", "silver", "gold", "platinum"], default: "bronze" })
   // loyaltyLevel: string;

@@ -48,6 +48,19 @@ export class QueryProductsDto extends BaseQueryDto {
   @IsMongoId({ each: true })
   brandIds?: string[];
 
+  @ApiPropertyOptional({
+    description: "Danh sách categoryId cần lọc",
+    type: [String],
+    example: [""],
+  })
+  @IsOptional()
+  @Transform(({ value }) =>
+    Array.isArray(value) ? value : typeof value === "string" ? [value] : [],
+  )
+  @IsArray()
+  @IsMongoId({ each: true })
+  productIds?: string[];
+
   @ApiPropertyOptional({ description: "Giá thấp nhất", example: 0 })
   @IsOptional()
   @Type(() => Number)

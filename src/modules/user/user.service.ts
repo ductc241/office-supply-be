@@ -12,10 +12,14 @@ import { CreateUserDto } from "./dto/create-user.dto";
 import { UpdateUserDto } from "./dto/update-user.dto";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { ProductService } from "../product/product.services";
 
 @Injectable()
 export class UserService {
-  constructor(private readonly userRepository: UserRepository) {}
+  constructor(
+    private readonly userRepository: UserRepository,
+    private readonly productService: ProductService,
+  ) {}
 
   async create(createUserDto: CreateUserDto) {
     return this.userRepository.create(createUserDto);
@@ -82,5 +86,57 @@ export class UserService {
     await this.userRepository.save(user);
 
     return { message: "Đổi mật khẩu thành công" };
+  }
+
+  async addProductToFavourites(userId: string, productId: string) {
+    await this.userRepository.updateById(userId, {
+      $addToSet: { productFavourites: productId },
+    });
+  }
+
+  async removeProductFromFavourites(userId: string, productId: string) {
+    await this.userRepository.updateById(userId, {
+      $pull: { productFavourites: productId },
+    });
+  }
+
+  async getFavouriteProducts(userId: string) {
+    const user = await this.userRepository.findById(userId, {
+      projection: {
+        product_favourites: 1,
+      },
+    });
+
+    return user?.product_favourites || [];
+  }
+
+  async addProductToViewHistory(userId: string, productId: string) {
+    console.log(productId);
+    await this.userRepository.updateById(userId, {
+      $pull: { view_history: productId },
+    });
+
+    await this.userRepository.updateById(userId, {
+      $push: {
+        view_history: {
+          $each: [productId],
+          $position: 0,
+        },
+      },
+    });
+  }
+
+  async getUserViewHistory(userId: string, limit = 20) {
+    const user = await this.userRepository.findById(userId, {
+      projection: {
+        view_history: 1,
+      },
+      limit,
+    });
+
+    if (user?.view_history.length === 0) return [];
+
+    const productIds = user.view_history.map((id) => id.toString());
+    return this.productService.query({ productIds, perPage: limit });
   }
 }

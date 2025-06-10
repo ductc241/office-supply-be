@@ -2,13 +2,12 @@ import {
   Body,
   Controller,
   Get,
-  Param,
   Patch,
   Post,
   Put,
   UseGuards,
 } from "@nestjs/common";
-import { ApiBearerAuth, ApiParam } from "@nestjs/swagger";
+import { ApiBearerAuth } from "@nestjs/swagger";
 
 import { AuthGuard } from "../auth/auth.guard";
 
@@ -33,22 +32,13 @@ export class CartController {
     return this.cartService.clear(user.sub);
   }
 
-  @Post("items")
+  @Post("items/increase")
   async add(@User() user, @Body() dto: AddCartItemDto) {
-    return await this.cartService.add(user.sub, dto);
+    return await this.cartService.increase(user.sub, dto);
   }
 
-  @Put("items/:id")
-  @ApiParam({
-    name: "id",
-    required: true,
-    type: String,
-  })
-  async decrease(
-    @User() user,
-    @Param("id") id: string,
-    @Body() dto: DecreaseCartItemDto,
-  ) {
-    return await this.cartService.decrease(user.sub, id, dto);
+  @Put("items/decrease")
+  async decrease(@User() user, @Body() dto: DecreaseCartItemDto) {
+    return await this.cartService.decrease(user.sub, dto);
   }
 }
