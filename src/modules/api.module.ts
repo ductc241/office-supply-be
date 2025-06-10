@@ -9,6 +9,9 @@ import { AuthModule } from "./auth/auth.module";
 import { CouponModule } from "./coupon/coupon.module";
 import { OrderModule } from "./order/order.module";
 import { UserAddressModule } from "./user-address/user-address.module";
+import { InventoryModule } from "./inventory/inventory.module";
+import { WarehouseModule } from "./warehouse/warehouse.module";
+import { StockTransactionModule } from "./stock-transaction/stock-transaction.module";
 
 @Module({
   imports: [
@@ -22,6 +25,9 @@ import { UserAddressModule } from "./user-address/user-address.module";
     CartModule,
     CouponModule,
     OrderModule,
+    InventoryModule,
+    WarehouseModule,
+    StockTransactionModule,
   ],
 })
 export class ApiModule {}
