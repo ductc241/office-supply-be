@@ -42,7 +42,7 @@ class CreateProductDto {
   })
   @IsOptional()
   @IsArray()
-  @IsMongoId({ each: true })
+  @IsString({ each: true })
   @Type(() => String)
   images?: string[];
 

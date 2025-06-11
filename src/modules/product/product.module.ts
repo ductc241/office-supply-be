@@ -8,6 +8,8 @@ import { ProductRepository } from "./product.repository";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { CategoryModule } from "../category/category.module";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
+import { StockTransactionModule } from "../stock-transaction/stock-transaction.module";
+import { InventoryModule } from "../inventory/inventory.module";
 
 @Module({
   providers: [ProductService, ProductRepository, PaginationHeaderHelper],
@@ -16,6 +18,8 @@ import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper"
     MongooseModule.forFeature([{ name: Product.name, schema: ProductSchema }]),
     ProductVariantModule,
     CategoryModule,
+    StockTransactionModule,
+    InventoryModule,
   ],
   exports: [ProductService, ProductRepository],
 })

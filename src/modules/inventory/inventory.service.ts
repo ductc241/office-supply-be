@@ -1,12 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { InventoryRepository } from "./inventory.repository";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
-import { WarehouseRepository } from "../warehouse/warehouse.repository";
 import ERROR_MESSAGE from "src/shared/constants/error";
+import { CreateInventoryDto } from "./dto/create-inventory.dto";
 
 @Injectable()
 export class InventoryService {
@@ -15,22 +11,19 @@ export class InventoryService {
     private readonly productVariantRepo: ProductVariantRepository,
   ) {}
 
-  async create(variantId: string, warehouseId: string) {
-    const existing = await this.inventoryRepository.findOne({
-      variant: variantId,
-      warehouse: warehouseId,
+  async create(dto: CreateInventoryDto) {
+    const variantIds = dto.variants.map((v) => v.variant);
+    const existing = await this.inventoryRepository.find({
+      _id: { $in: variantIds },
     });
-    if (existing) return existing;
 
-    const variant = await this.productVariantRepo.findById(variantId);
-    if (!variant) throw new NotFoundException("Product variant không tồn tại");
+    console.log(dto);
 
-    return this.inventoryRepository.create({
-      product_variant_id: variantId,
-      quantity: 0,
-      should_track_low_stock: true,
-      low_stock_threshold: variant.low_stock_threshold ?? 5, // default
-    });
+    if (existing.length > 0) {
+      return new BadRequestException(ERROR_MESSAGE.BAD_REQUEST);
+    }
+
+    return this.inventoryRepository.createBulk(dto.variants);
   }
 
   /**

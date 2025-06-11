@@ -12,6 +12,12 @@ import {
 import { ProductFilter } from "./types/product.enum";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { replaceQuerySearch } from "src/shared/helpers/common";
+import { StockTransactionService } from "../stock-transaction/stock-transaction.service";
+import {
+  StockTransactionReferenceType,
+  StockTransactionType,
+} from "../stock-transaction/types/stock-transaction.enum";
+import { InventoryService } from "../inventory/inventory.service";
 
 @Injectable()
 export class ProductService {
@@ -19,6 +25,8 @@ export class ProductService {
     private readonly productRepository: ProductRepository,
     private readonly productVariantRepository: ProductVariantRepository,
     private readonly categoryService: CategoryService,
+    private readonly stockTransactionService: StockTransactionService,
+    private readonly inventoryService: InventoryService,
     private readonly paginationHeaderHelper: PaginationHeaderHelper,
   ) {}
 
@@ -366,7 +374,36 @@ export class ProductService {
         product: new Types.ObjectId(productId),
       }));
 
-      await this.productVariantRepository.create(variantDocs);
+      const newVariants: any =
+        await this.productVariantRepository.createBulk(variantDocs);
+
+      // Tạo inventory
+      const variantInventories = newVariants.map((v) => {
+        return {
+          variant: v._id,
+          quantity: 10,
+          should_track_low_stock: false,
+        };
+      });
+      await this.inventoryService.create({
+        variants: variantInventories,
+      });
+
+      // Tạo stock transaction
+      dto.variants.filter((v) => {
+        if (v.stock) {
+          const variant = newVariants.find((_v) => v.sku === _v.sku);
+
+          if (variant) {
+            this.stockTransactionService.create({
+              variant_id: variant._id,
+              quantity: v.stock,
+              type: StockTransactionType.INIT,
+              reference_type: StockTransactionReferenceType.MANUAL,
+            });
+          }
+        }
+      });
 
       return {
         product,

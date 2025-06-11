@@ -5,13 +5,10 @@ import {
   StockTransactionType,
 } from "./types/stock-transaction.enum";
 
-@Schema({ timestamps: true })
+@Schema({ collection: "stock-transactions", timestamps: true })
 export class StockTransaction {
   @Prop({ type: Types.ObjectId, ref: "ProductVariant", required: true })
   variant: Types.ObjectId;
-
-  @Prop({ type: Types.ObjectId, ref: "Warehouse", required: true })
-  warehouse: Types.ObjectId;
 
   @Prop({ required: true })
   quantity: number; // âm nếu xuất kho

@@ -15,9 +15,6 @@ export class ProductVariant {
   @Prop({ type: Object })
   attributes: Record<string, string>;
 
-  @Prop({ type: Number, required: true, default: 0 })
-  stock: number;
-
   @Prop({ type: Number, required: true })
   base_price: number;
 

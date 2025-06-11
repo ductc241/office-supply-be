@@ -1,5 +1,5 @@
 // dto/create-product-variant.dto.ts
-import { ApiProperty } from "@nestjs/swagger";
+import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsMongoId,
   IsNotEmpty,
@@ -46,10 +46,6 @@ export class CreateProductVariantDto {
   @IsObject()
   attributes?: Record<string, string> | null;
 
-  @ApiProperty({ example: 10, description: "Số lượng tồn kho" })
-  @IsNumber()
-  stock: number;
-
   @ApiProperty({ example: 199000, description: "Giá gốc (base price)" })
   @IsNumber()
   base_price: number;
@@ -73,4 +69,9 @@ export class CreateProductVariantDto {
   @IsOptional()
   @IsNumber()
   average_cost_price?: number;
+
+  @ApiPropertyOptional({ example: 10, description: "Số lượng tồn kho ban đầu" })
+  @IsOptional()
+  @IsNumber()
+  stock?: number;
 }

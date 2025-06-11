@@ -28,4 +28,4 @@ import { StockOutService } from "./service/stock-out.service";
     StockOutService,
   ],
 })
-export class StockTransactionModule {}
+export class StockModule {}

@@ -18,24 +18,20 @@ export class StockTransactionService {
   ) {}
 
   async create(payload: CreateStockTransactionDto) {
-    const {
-      variant_id,
-      warehouse_id,
-      quantity,
-      type,
-      note,
-      reference_type,
-      reference_id,
-    } = payload;
+    console.log("21", payload);
 
-    const variant = await this.productVariantRepository.findById(variant_id);
+    const { variant_id, quantity, type, note, reference_type, reference_id } =
+      payload;
+
+    const variant = await this.productVariantRepository.findById(
+      variant_id.toString(),
+    );
     if (!variant) {
       throw new NotFoundException("Product variant không tồn tại");
     }
 
     const variantInventory = await this.inventoryRepository.findOne({
       variant: variant_id,
-      warehouse: warehouse_id,
     });
     if (!variantInventory) {
       throw new NotFoundException("Không tìm thấy bản ghi tồn kho");
@@ -43,6 +39,9 @@ export class StockTransactionService {
 
     let quantityChange = 0;
     switch (type) {
+      case StockTransactionType.INIT:
+        quantityChange = 0;
+        break;
       case StockTransactionType.IMPORT:
       case StockTransactionType.ORDER_CANCEL_IMPORT:
       case StockTransactionType.ADJUSTMENT:
@@ -62,17 +61,15 @@ export class StockTransactionService {
     }
 
     // 3. Cập nhật tồn kho
-    await this.inventoryRepository.updateQuantity(
-      variant_id,
-      warehouse_id,
-      quantityChange,
-    );
+    await this.inventoryRepository.updateById(variant_id.toString(), {
+      $inc: { quantity: quantityChange },
+    });
 
     const transaction = await this.stockTransactionRepository.create({
       variant: variant_id,
-      warehouse: warehouse_id,
       quantity,
-      quantity_before: variantInventory.quantity,
+      quantity_before:
+        type === StockTransactionType.INIT ? 0 : variantInventory.quantity,
       quantity_after: variantInventory.quantity + quantityChange,
       type,
       reference_type,
