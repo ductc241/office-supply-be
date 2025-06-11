@@ -1,12 +1,15 @@
 export enum StockTransactionType {
-  STOCK_IN = "in",
-  STOCK_OUT = "out",
-  STOCK_ADJUSTMENT = "adjustment",
+  IMPORT = "IMPORT",
+  ORDER_CANCEL_IMPORT = "ORDER_CANCEL_IMPORT",
+  ORDER_EXPORT = "ORDER_EXPORT",
+  OTHER_EXPORT = "OTHER_EXPORT",
+  ADJUSTMENT = "ADJUSTMENT",
+  INTERNAL_TRANSFER = "INTERNAL_TRANSFER", // chuyển kho
 }
 
 export enum StockTransactionReferenceType {
-  "ORDER" = "order",
-  "STOCK_IN" = "stock-in",
-  "STOCK_OUT" = "stock-out",
-  "MANUAL" = "manual",
+  "ORDER" = "ORDER",
+  "STOCK_IN" = "STOCK-IN",
+  "STOCK_OUT" = "STOCK-OUT",
+  "MANUAL" = "MANUAL",
 }

@@ -1,5 +1,17 @@
-import { Prop, Schema } from "@nestjs/mongoose";
-import { Types } from "mongoose";
+import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
+import { HydratedDocument, Types } from "mongoose";
+
+class StockInItem {
+  @Prop({ type: Types.ObjectId, ref: "ProductVariant", required: true })
+  variant: Types.ObjectId;
+
+  @Prop({ required: true, type: Number })
+  quantity: number;
+
+  @Prop({ default: null })
+  cost_price: number;
+}
+// const StockInItemSchema
 
 @Schema({ timestamps: true })
 export class StockIn {
@@ -10,22 +22,11 @@ export class StockIn {
   note?: string;
 
   @Prop({
-    type: [
-      {
-        variant: {
-          type: Types.ObjectId,
-          ref: "ProductVariant",
-          required: true,
-        },
-        quantity: { type: Number, required: true },
-        cost_price: { type: Number }, // Giá nhập
-      },
-    ],
+    type: [StockInItem],
     required: true,
   })
-  items: Array<{
-    variant: Types.ObjectId;
-    quantity: number;
-    cost_price?: number;
-  }>;
+  items: StockInItem[];
 }
+
+export type StockInDocument = HydratedDocument<StockIn>;
+export const StockInSchema = SchemaFactory.createForClass(StockIn);

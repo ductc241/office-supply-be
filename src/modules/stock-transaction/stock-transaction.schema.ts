@@ -13,14 +13,17 @@ export class StockTransaction {
   @Prop({ type: Types.ObjectId, ref: "Warehouse", required: true })
   warehouse: Types.ObjectId;
 
-  @Prop({ enum: StockTransactionType, required: true })
-  type: StockTransactionType;
-
   @Prop({ required: true })
   quantity: number; // âm nếu xuất kho
 
-  @Prop()
-  reason?: string; // ví dụ: "Order #1234", "Manual adjust", ...
+  @Prop({ required: true })
+  quantity_before: number;
+
+  @Prop({ required: true })
+  quantity_after: number;
+
+  @Prop({ enum: StockTransactionType, required: true })
+  type: StockTransactionType;
 
   @Prop({ enum: StockTransactionReferenceType, required: true })
   reference_type: StockTransactionReferenceType;
@@ -28,8 +31,8 @@ export class StockTransaction {
   @Prop({ type: Types.ObjectId })
   reference_id?: Types.ObjectId;
 
-  @Prop({ required: true })
-  current_stock: number; // tồn kho sau thay đổi
+  @Prop()
+  note?: string; // ví dụ: "Order #1234", "Manual adjust", ...
 }
 
 export type StockTransactionDocument = HydratedDocument<StockTransaction>;

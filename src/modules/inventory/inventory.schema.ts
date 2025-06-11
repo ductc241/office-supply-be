@@ -6,16 +6,13 @@ export class Inventory {
   @Prop({ type: Types.ObjectId, ref: "ProductVariant", required: true })
   variant: Types.ObjectId;
 
-  @Prop({ type: Types.ObjectId, ref: "Warehouse", required: true })
-  warehouse: Types.ObjectId;
-
   @Prop({ required: true, default: 0 })
-  stock: number;
+  quantity: number;
 
   @Prop({ default: false })
   should_track_low_stock: boolean;
 
-  @Prop({ default: 0 })
+  @Prop({ default: null })
   low_stock_threshold?: number;
 }
 
