@@ -48,6 +48,10 @@ export class CreateProductVariantDto {
 
   @ApiProperty({ example: 199000, description: "Giá gốc (base price)" })
   @IsNumber()
+  cost_price: number;
+
+  @ApiProperty({ example: 199000, description: "Giá gốc (base price)" })
+  @IsNumber()
   base_price: number;
 
   @ApiProperty({ example: 189000, required: false })
@@ -60,15 +64,15 @@ export class CreateProductVariantDto {
   @IsNumber()
   max_price?: number;
 
-  @ApiProperty({ example: 150000, required: false })
-  @IsOptional()
-  @IsNumber()
-  last_cost_price?: number;
+  // @ApiProperty({ example: 150000, required: false })
+  // @IsOptional()
+  // @IsNumber()
+  // last_cost_price?: number;
 
-  @ApiProperty({ example: 160000, required: false })
-  @IsOptional()
-  @IsNumber()
-  average_cost_price?: number;
+  // @ApiProperty({ example: 160000, required: false })
+  // @IsOptional()
+  // @IsNumber()
+  // average_cost_price?: number;
 
   @ApiPropertyOptional({ example: 10, description: "Số lượng tồn kho ban đầu" })
   @IsOptional()

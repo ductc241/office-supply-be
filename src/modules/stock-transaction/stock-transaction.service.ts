@@ -18,10 +18,17 @@ export class StockTransactionService {
   ) {}
 
   async create(payload: CreateStockTransactionDto) {
-    console.log("21", payload);
-
-    const { variant_id, quantity, type, note, reference_type, reference_id } =
-      payload;
+    const {
+      variant_id,
+      quantity,
+      type,
+      note,
+      reference_id,
+      cost_price,
+      product_id,
+      average_cost_price_after,
+      average_cost_price_before,
+    } = payload;
 
     const variant = await this.productVariantRepository.findById(
       variant_id.toString(),
@@ -66,13 +73,16 @@ export class StockTransactionService {
     });
 
     const transaction = await this.stockTransactionRepository.create({
+      product: product_id,
       variant: variant_id,
       quantity,
       quantity_before:
         type === StockTransactionType.INIT ? 0 : variantInventory.quantity,
       quantity_after: variantInventory.quantity + quantityChange,
+      cost_price,
+      average_cost_price_before,
+      average_cost_price_after,
       type,
-      reference_type,
       reference_id,
       note,
     });
@@ -80,15 +90,5 @@ export class StockTransactionService {
     return transaction;
   }
 
-  // async query(filter: StockTransactionFilterDto) {
-  //   return this.stockTransactionRepository.findWithFilter(filter);
-  // }
-
-  // async getTransactionById(id: string) {
-  //   const transaction = await this.stockTransactionRepository.findById(id);
-  //   if (!transaction) {
-  //     throw new NotFoundException("Không tìm thấy transaction");
-  //   }
-  //   return transaction;
-  // }
+  async query() {}
 }

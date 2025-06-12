@@ -11,6 +11,10 @@ import { CouponService } from "../coupon/coupon.service";
 import { Types } from "mongoose";
 import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
 import { OrderStatus } from "./types/order.enum";
+import { InventoryRepository } from "../inventory/inventory.repository";
+import { InventoryService } from "../inventory/inventory.service";
+import { StockTransactionService } from "../stock-transaction/stock-transaction.service";
+import { StockTransactionType } from "../stock-transaction/types/stock-transaction.enum";
 
 @Injectable()
 export class OrderService {
@@ -19,6 +23,9 @@ export class OrderService {
     private readonly couponService: CouponService,
     private readonly couponUsageService: CouponUsageService,
     private readonly productVariantRepository: ProductVariantRepository,
+    private readonly inventoryRepository: InventoryRepository,
+    private readonly inventoryService: InventoryService,
+    private readonly stockTransactionService: StockTransactionService,
   ) {}
 
   async create(userId: string, dto: CreateOrderDto) {
@@ -27,6 +34,28 @@ export class OrderService {
     });
 
     const variantMap = new Map(variants.map((v) => [v._id.toString(), v]));
+
+    const orderItemInventory = await this.inventoryRepository.find({
+      variant: { $in: variantMap },
+    });
+
+    const orderItemsBelowMinStock = [];
+    orderItemInventory.forEach((inventory) => {
+      const orderItem = dto.items.find(
+        (i) => i.variant === inventory.variant.toString(),
+      );
+
+      if (
+        inventory.quantity - orderItem.quantity <
+        inventory.low_stock_threshold
+      ) {
+        orderItemsBelowMinStock.push(orderItem);
+      }
+    });
+
+    if (orderItemsBelowMinStock.length > 0) {
+      throw new BadRequestException("So luong ton kho cua san pham khong du");
+    }
 
     let subtotal = 0;
     const orderItems = dto.items.map((item) => {
@@ -78,8 +107,18 @@ export class OrderService {
       });
     }
 
-    const total = subtotal - discount + dto.shipping_fee;
+    orderItemInventory.forEach(async (i) => {
+      const orderItemQuantity = dto.items.find(
+        (ot) => (ot.variant = i.variant.toString()),
+      );
 
+      await this.inventoryService.updateInventoryQuantity(
+        i._id.toString(),
+        -orderItemQuantity.quantity,
+      );
+    });
+
+    const total = subtotal - discount + dto.shipping_fee;
     const order = await this.orderRepository.create({
       user: new Types.ObjectId(userId),
       items: orderItems,
@@ -92,6 +131,19 @@ export class OrderService {
       payment_method: dto.payment_method,
       shipping_method: dto.shipping_method,
       shipping_address: dto.shipping_address,
+    });
+
+    dto.items.forEach(async (i) => {
+      const variant = variantMap.get(i.variant);
+
+      await this.stockTransactionService.create({
+        type: StockTransactionType.ORDER_EXPORT,
+        variant_id: variant._id,
+        product_id: variant.product,
+        quantity: i.quantity,
+        cost_price: variant.average_cost_price,
+        reference_id: order._id,
+      });
     });
 
     if (dto.coupon) {

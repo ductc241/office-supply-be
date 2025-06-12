@@ -3,6 +3,7 @@ import { InventoryRepository } from "./inventory.repository";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { CreateInventoryDto } from "./dto/create-inventory.dto";
+import { QueryOptions } from "mongoose";
 
 @Injectable()
 export class InventoryService {
@@ -17,8 +18,6 @@ export class InventoryService {
       _id: { $in: variantIds },
     });
 
-    console.log(dto);
-
     if (existing.length > 0) {
       return new BadRequestException(ERROR_MESSAGE.BAD_REQUEST);
     }
@@ -26,9 +25,11 @@ export class InventoryService {
     return this.inventoryRepository.createBulk(dto.variants);
   }
 
-  /**
-   * Cập nhật số lượng tồn kho (dùng cho xuất/nhập kho)
-   */
+  async findOne(conditions: any, options?: QueryOptions) {
+    return await this.inventoryRepository.findOne(conditions, options);
+  }
+
+  //Cập nhật số lượng tồn kho (dùng cho xuất/nhập kho)
   async updateInventoryQuantity(inventory_id: string, quantity_change: number) {
     const inventory = await this.inventoryRepository.findById(inventory_id);
     if (!inventory) return new BadRequestException(ERROR_MESSAGE.NOT_FOUND);
@@ -44,27 +45,18 @@ export class InventoryService {
     });
   }
 
-  /**
-   * Cập nhật ngưỡng cảnh báo tồn kho
-   */
   async updateLowStockThreshold(inventory_id: string, threshold: number) {
     return this.inventoryRepository.updateById(inventory_id, {
       low_stock_threshold: threshold,
     });
   }
 
-  /**
-   * Bật/tắt theo dõi cảnh báo tồn kho
-   */
   async toggleLowStockWarning(inventory_id: string, should_track: boolean) {
     return this.inventoryRepository.updateById(inventory_id, {
       should_track_low_stock: should_track,
     });
   }
 
-  /**
-   * Tìm các sản phẩm sắp hết hàng (dùng cho cron cảnh báo)
-   */
   async getLowStockProducts() {
     return this.inventoryRepository.find({
       should_track_low_stock: true,

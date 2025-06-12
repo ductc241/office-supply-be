@@ -1,11 +1,8 @@
 import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Types } from "mongoose";
 
-@Schema({ timestamps: true })
+@Schema({ collection: "stock-outs", timestamps: true })
 export class StockOut {
-  @Prop({ type: Types.ObjectId, ref: "Warehouse", required: true })
-  warehouse: Types.ObjectId;
-
   @Prop({ default: null })
   note?: string;
 

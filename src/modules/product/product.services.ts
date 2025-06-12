@@ -13,10 +13,7 @@ import { ProductFilter } from "./types/product.enum";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { replaceQuerySearch } from "src/shared/helpers/common";
 import { StockTransactionService } from "../stock-transaction/stock-transaction.service";
-import {
-  StockTransactionReferenceType,
-  StockTransactionType,
-} from "../stock-transaction/types/stock-transaction.enum";
+import { StockTransactionType } from "../stock-transaction/types/stock-transaction.enum";
 import { InventoryService } from "../inventory/inventory.service";
 
 @Injectable()
@@ -370,8 +367,14 @@ export class ProductService {
       // Tạo Variants
       const productId = product._id.toString();
       const variantDocs = variants.map((variant) => ({
-        ...variant,
         product: new Types.ObjectId(productId),
+        sku: variant.sku,
+        attributes: variant.attributes,
+        base_price: variant.base_price,
+        min_price: variant.min_price,
+        max_price: variant.max_price,
+        last_cost_price: variant.cost_price,
+        average_cost_price: variant.cost_price,
       }));
 
       const newVariants: any =
@@ -381,7 +384,7 @@ export class ProductService {
       const variantInventories = newVariants.map((v) => {
         return {
           variant: v._id,
-          quantity: 10,
+          quantity: variants.find((vd) => vd.sku === v.sku).stock,
           should_track_low_stock: false,
         };
       });
@@ -390,16 +393,19 @@ export class ProductService {
       });
 
       // Tạo stock transaction
-      dto.variants.filter((v) => {
+      dto.variants.forEach((v) => {
         if (v.stock) {
           const variant = newVariants.find((_v) => v.sku === _v.sku);
 
           if (variant) {
             this.stockTransactionService.create({
+              product_id: product._id,
               variant_id: variant._id,
               quantity: v.stock,
+              cost_price: variant.average_cost_price,
+              average_cost_price_after: variant.average_cost_price,
+              average_cost_price_before: variant.average_cost_price,
               type: StockTransactionType.INIT,
-              reference_type: StockTransactionReferenceType.MANUAL,
             });
           }
         }

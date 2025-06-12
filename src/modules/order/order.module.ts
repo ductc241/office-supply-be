@@ -8,6 +8,8 @@ import { CouponModule } from "../coupon/coupon.module";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { OrderController } from "./order.controller";
 import { CouponUsageModule } from "../coupon-usage/coupon-usage.module";
+import { InventoryModule } from "../inventory/inventory.module";
+import { StockTransactionModule } from "../stock-transaction/stock-transaction.module";
 
 @Module({
   providers: [OrderRepository, OrderService],
@@ -17,6 +19,8 @@ import { CouponUsageModule } from "../coupon-usage/coupon-usage.module";
     CouponModule,
     CouponUsageModule,
     ProductVariantModule,
+    InventoryModule,
+    StockTransactionModule,
   ],
 })
 export class OrderModule {}
