@@ -23,10 +23,10 @@ export class StockTransaction {
   cost_price: number;
 
   @Prop({ default: null })
-  average_cost_price_before?: number; // t.tin bổ sung, chỉ thay đổi khi nhập hàng
+  average_cost_price_before?: number; // t.tin bổ sung, chỉ có khi nhập hàng
 
   @Prop({ default: null })
-  average_cost_price_after?: number; // t.tin bổ sung, chỉ thay đổi khi nhập hàng
+  average_cost_price_after?: number; // t.tin bổ sung, chỉ có khi nhập hàng
 
   @Prop({ enum: StockTransactionType, required: true })
   type: StockTransactionType;

@@ -1,13 +1,13 @@
 export enum OrderStatus {
-  PENDING = "pending",
-  PAID = "paid",
-  SHIPPING = "shipping",
-  DELIVERED = "delivered",
-  CANCELLED = "cancelled",
-  REFUNDED = "refunded",
+  PENDING = "PENDING",
+  PAID = "PAID",
+  SHIPPING = "SHIPPING",
+  DELIVERED = "DELIVERED",
+  CANCELLED = "CANCELLED",
+  REFUNDED = "REFUNDED",
 }
 
 export enum OrderPaymentType {
-  COD = "cod",
-  BANKING = "banking",
+  COD = "COD",
+  BANKING = "BANKING",
 }

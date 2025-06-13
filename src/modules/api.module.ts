@@ -10,7 +10,6 @@ import { CouponModule } from "./coupon/coupon.module";
 import { OrderModule } from "./order/order.module";
 import { UserAddressModule } from "./user-address/user-address.module";
 import { InventoryModule } from "./inventory/inventory.module";
-import { WarehouseModule } from "./warehouse/warehouse.module";
 import { StockTransactionModule } from "./stock-transaction/stock-transaction.module";
 import { StockModule } from "./stock/stock.module";
 
@@ -27,7 +26,6 @@ import { StockModule } from "./stock/stock.module";
     CouponModule,
     OrderModule,
     InventoryModule,
-    WarehouseModule,
     StockTransactionModule,
     StockModule,
   ],

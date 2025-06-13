@@ -68,10 +68,16 @@ export class StockTransactionService {
     }
 
     // 3. Cập nhật tồn kho
-    await this.inventoryRepository.updateById(variant_id.toString(), {
-      $inc: { quantity: quantityChange },
-    });
+    await this.inventoryRepository.updateOne(
+      {
+        variant: variant_id,
+      },
+      {
+        $inc: { quantity: quantityChange },
+      },
+    );
 
+    // log
     const transaction = await this.stockTransactionRepository.create({
       product: product_id,
       variant: variant_id,

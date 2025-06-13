@@ -20,6 +20,8 @@ export class AllExceptionsFilter implements ExceptionFilter {
         ? exception.getStatus()
         : HttpStatus.INTERNAL_SERVER_ERROR;
 
+    const cause = exception instanceof HttpException ? exception.cause : null;
+
     const exceptionResponse =
       exception instanceof HttpException ? exception.getResponse() : null;
 
@@ -37,9 +39,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
       statusCode: status,
       errorCode: this.mapToErrorCode(exception),
       message: typeof message === "string" ? message : "Error occurred",
+      cause: cause,
       timestamp: new Date().toISOString(),
       errors: details,
-      raw: exception,
+      // raw: exception,
     });
   }
 

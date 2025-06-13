@@ -373,8 +373,8 @@ export class ProductService {
         base_price: variant.base_price,
         min_price: variant.min_price,
         max_price: variant.max_price,
-        last_cost_price: variant.cost_price,
-        average_cost_price: variant.cost_price,
+        last_cost_price: variant.cost_price || null,
+        average_cost_price: variant.cost_price || null,
       }));
 
       const newVariants: any =
@@ -384,7 +384,7 @@ export class ProductService {
       const variantInventories = newVariants.map((v) => {
         return {
           variant: v._id,
-          quantity: variants.find((vd) => vd.sku === v.sku).stock,
+          quantity: variants.find((vd) => vd.sku === v.sku).stock || 0,
           should_track_low_stock: false,
         };
       });
