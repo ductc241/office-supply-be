@@ -12,6 +12,7 @@ import { UserAddressModule } from "./user-address/user-address.module";
 import { InventoryModule } from "./inventory/inventory.module";
 import { StockTransactionModule } from "./stock-transaction/stock-transaction.module";
 import { StockModule } from "./stock/stock.module";
+import { MailModule } from "./mail/mail.module";
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { StockModule } from "./stock/stock.module";
     InventoryModule,
     StockTransactionModule,
     StockModule,
+    MailModule,
   ],
 })
 export class ApiModule {}

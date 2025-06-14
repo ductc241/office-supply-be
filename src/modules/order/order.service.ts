@@ -14,6 +14,8 @@ import { OrderStatus } from "./types/order.enum";
 import { InventoryRepository } from "../inventory/inventory.repository";
 import { StockTransactionService } from "../stock-transaction/stock-transaction.service";
 import { StockTransactionType } from "../stock-transaction/types/stock-transaction.enum";
+import { SendMailService } from "../mail/send-mail.service";
+import { SocketGateway } from "../socket/socket.gateway";
 
 @Injectable()
 export class OrderService {
@@ -24,6 +26,8 @@ export class OrderService {
     private readonly productVariantRepository: ProductVariantRepository,
     private readonly inventoryRepository: InventoryRepository,
     private readonly stockTransactionService: StockTransactionService,
+    private readonly sendMailService: SendMailService,
+    private readonly socketGateway: SocketGateway,
   ) {}
 
   async create(userId: string, dto: CreateOrderDto) {
@@ -166,6 +170,9 @@ export class OrderService {
       );
     }
 
+    //send mail
+    this.sendMailService.sendTestMail(order._id.toString());
+
     return order;
   }
 
@@ -249,7 +256,16 @@ export class OrderService {
       order.status !== OrderStatus.PENDING
     ) {
       throw new BadRequestException(
-        "The transaction has been confirmed and cannot be changed.",
+        "The order has been confirmed and cannot be changed.",
+      );
+    }
+
+    if (
+      order.status === OrderStatus.CANCELLED ||
+      order.status === OrderStatus.REFUNDED
+    ) {
+      throw new BadRequestException(
+        "The order has been completed and cannot be changed.",
       );
     }
 
@@ -264,26 +280,59 @@ export class OrderService {
       }
     }
 
+    this.socketGateway.sendOrderStatus(
+      order.user.toString(),
+      orderId,
+      dto.status,
+    );
+
     return this.orderRepository.updateById(orderId, update);
   }
 
   // không tạo stock-in do hàng chưa đc giao ra ngoài
   async cancelOrder(orderId: string, userId: string) {
-    const order = await this.orderRepository.findById(orderId);
+    const order = await this.orderRepository.findOne({
+      _id: new Types.ObjectId(orderId),
+      user: new Types.ObjectId(userId),
+    });
 
-    if (!order || order.user.toString() !== userId) {
-      throw new NotFoundException("Order not found or not authorized");
+    if (!order) {
+      throw new NotFoundException("Order not found");
     }
 
     if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException("Only pending orders can be cancelled");
     }
 
-    // await this.stockTransactionService.create({})
+    // import product + update avg_cost
+    order.items.forEach(async (orderItem) => {
+      const variant = await this.productVariantRepository.findById(
+        orderItem.variant,
+      );
+      const inventory = await this.inventoryRepository.findOne({
+        variant: new Types.ObjectId(orderItem.variant),
+      });
+
+      const new_average_cost_price =
+        (inventory.quantity * variant.average_cost_price +
+          orderItem.quantity * orderItem.cost_price_at_time) /
+        (inventory.quantity + orderItem.quantity);
+
+      await this.stockTransactionService.create({
+        type: StockTransactionType.ORDER_CANCEL_IMPORT,
+        variant_id: orderItem.variant,
+        product_id: orderItem.product,
+        quantity: orderItem.quantity,
+        cost_price: orderItem.cost_price_at_time,
+        average_cost_price_before: variant.average_cost_price,
+        average_cost_price_after: new_average_cost_price,
+        reference_id: new Types.ObjectId(orderId),
+      });
+    });
 
     return this.updateStatus(orderId, { status: OrderStatus.CANCELLED });
   }
 
   //  tạo stock-in do hàng đã đc vận chuyển đi
-  async refundOrer() {}
+  async refundOrder() {}
 }

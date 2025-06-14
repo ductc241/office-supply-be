@@ -10,6 +10,8 @@ import { OrderController } from "./order.controller";
 import { CouponUsageModule } from "../coupon-usage/coupon-usage.module";
 import { InventoryModule } from "../inventory/inventory.module";
 import { StockTransactionModule } from "../stock-transaction/stock-transaction.module";
+import { MailModule } from "../mail/mail.module";
+import { SocketModule } from "../socket/socket.module";
 
 @Module({
   providers: [OrderRepository, OrderService],
@@ -21,6 +23,8 @@ import { StockTransactionModule } from "../stock-transaction/stock-transaction.m
     ProductVariantModule,
     InventoryModule,
     StockTransactionModule,
+    MailModule,
+    SocketModule,
   ],
 })
 export class OrderModule {}

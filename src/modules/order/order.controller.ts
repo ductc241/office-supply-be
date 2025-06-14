@@ -48,4 +48,13 @@ export class OrderController {
   ) {
     return await this.orderService.updateStatus(orderId, dto);
   }
+
+  @ApiOperation({
+    summary: "cms - update order status",
+    description: "paid, shipping, delivered, cancelled, refunded",
+  })
+  @Patch("cancel/:orderId")
+  async cancelOrder(@User() user, @Param("orderId") orderId: string) {
+    return await this.orderService.cancelOrder(orderId, user.sub);
+  }
 }
