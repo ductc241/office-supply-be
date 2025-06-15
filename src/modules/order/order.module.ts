@@ -26,5 +26,6 @@ import { SocketModule } from "../socket/socket.module";
     MailModule,
     SocketModule,
   ],
+  exports: [OrderRepository],
 })
 export class OrderModule {}

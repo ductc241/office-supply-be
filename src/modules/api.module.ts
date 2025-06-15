@@ -14,6 +14,7 @@ import { StockTransactionModule } from "./stock-transaction/stock-transaction.mo
 import { StockModule } from "./stock/stock.module";
 import { MailModule } from "./mail/mail.module";
 import { CronModule } from "./cron-job/cron.module";
+import { StatisticalModule } from "./statistical/statistical.module";
 
 @Module({
   imports: [
@@ -31,6 +32,7 @@ import { CronModule } from "./cron-job/cron.module";
     StockTransactionModule,
     StockModule,
     MailModule,
+    StatisticalModule,
     CronModule,
   ],
 })
