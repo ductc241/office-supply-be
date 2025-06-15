@@ -8,6 +8,8 @@ import ERROR_MESSAGE from "./shared/constants/error";
 
 // https://docs.nestjs.com/techniques/configuration
 
+import "./shared/helpers/handlebars";
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   app.enableCors();

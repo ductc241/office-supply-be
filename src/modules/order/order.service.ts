@@ -171,7 +171,7 @@ export class OrderService {
     }
 
     //send mail
-    this.sendMailService.sendTestMail(order._id.toString());
+    this.sendMailService.senNewOrderMail(order._id.toString());
 
     return order;
   }

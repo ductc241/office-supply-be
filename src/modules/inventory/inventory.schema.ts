@@ -3,6 +3,9 @@ import { HydratedDocument, Types } from "mongoose";
 
 @Schema({ timestamps: true })
 export class Inventory {
+  @Prop({ type: Types.ObjectId, ref: "Product", required: true })
+  product: Types.ObjectId;
+
   @Prop({ type: Types.ObjectId, ref: "ProductVariant", required: true })
   variant: Types.ObjectId;
 
@@ -14,6 +17,9 @@ export class Inventory {
 
   @Prop({ default: null })
   low_stock_threshold?: number;
+
+  @Prop({ default: 0 })
+  early_warning_buffer?: number;
 }
 
 export type InventoryDocument = HydratedDocument<Inventory>;

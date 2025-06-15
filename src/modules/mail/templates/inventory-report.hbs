@@ -1,0 +1,89 @@
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Báo cáo tồn kho</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+        padding: 20px;
+        background-color: #f9f9f9;
+        color: #333;
+      }
+
+      h2 {
+        text-align: center;
+        color: #2c3e50;
+        margin-bottom: 15px;
+      }
+
+      p {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: #ffffff;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.05);
+      }
+
+      thead {
+        background-color: #2980b9;
+        color: #ffffff;
+      }
+
+      th,
+      td {
+        padding: 12px 15px;
+        text-align: left;
+        border-bottom: 1px solid #dddddd;
+      }
+
+      tr:nth-child(even) {
+        background-color: #f2f2f2;
+      }
+
+      .footer {
+        margin-top: 30px;
+        font-size: 12px;
+        text-align: center;
+        color: #888;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>BÁO CÁO TỒN KHO</h2>
+    <p>Danh sách các sản phẩm sắp đạt tới giới hạn tồn kho</p>
+    <table>
+      <thead>
+        <tr>
+          <th>Tên sản phẩm</th>
+          <th>Tồn hiện tại</th>
+          <th>Tồn tối thiểu</th>
+          <th>Số dư khả dụng</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each inventories}}
+          <tr>
+            <td>{{fullProductName product.name variant.attributes}}</td>
+            <td>{{quantity}}</td>
+            <td>{{low_stock_threshold}}</td>
+            <td>{{availableBalance
+                quantity
+                low_stock_threshold
+                early_warning_buffer
+              }}</td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+
+    <div class="footer">
+      Báo cáo được tạo tự động từ hệ thống vào
+      {{createdAt}}
+    </div>
+  </body>
+</html>

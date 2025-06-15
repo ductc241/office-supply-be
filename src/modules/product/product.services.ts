@@ -383,6 +383,7 @@ export class ProductService {
       // Tạo inventory
       const variantInventories = newVariants.map((v) => {
         return {
+          product: product._id,
           variant: v._id,
           quantity: variants.find((vd) => vd.sku === v.sku).stock || 0,
           should_track_low_stock: false,

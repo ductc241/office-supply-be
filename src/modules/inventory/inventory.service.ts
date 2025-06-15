@@ -4,12 +4,17 @@ import { ProductVariantRepository } from "../product-variant/product-variant.rep
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { CreateInventoryDto } from "./dto/create-inventory.dto";
 import { QueryOptions } from "mongoose";
+import { SocketGateway } from "../socket/socket.gateway";
+import { SendMailService } from "../mail/send-mail.service";
+import { InvetoryItem } from "../mail/type/mail.type";
 
 @Injectable()
 export class InventoryService {
   constructor(
     private readonly inventoryRepository: InventoryRepository,
     private readonly productVariantRepo: ProductVariantRepository,
+    private readonly socketGateway: SocketGateway,
+    private readonly sendMailService: SendMailService,
   ) {}
 
   async create(dto: CreateInventoryDto) {
@@ -62,5 +67,74 @@ export class InventoryService {
       should_track_low_stock: true,
       $expr: { $lte: ["$quantity", "$low_stock_threshold"] },
     });
+  }
+
+  async checkLowStock() {
+    console.log("start check inventory");
+
+    const inventories = await this.inventoryRepository.find(
+      {
+        should_track_low_stock: true,
+        low_stock_threshold: { $ne: null },
+      },
+      {
+        populate: [
+          {
+            path: "product",
+            select: "name",
+          },
+          {
+            path: "variant",
+            select: "attributes",
+          },
+        ],
+      },
+    );
+
+    if (!inventories.length) {
+      return;
+    }
+
+    let totalLowStock = 0;
+    const lowStockProducts: InvetoryItem[] = [];
+    for (const inventory of inventories) {
+      const _inventory: any = { ...inventory.toObject() };
+
+      const threshold = inventory.low_stock_threshold ?? 0;
+      const buffer = inventory.early_warning_buffer ?? 0;
+      const quantity = inventory.quantity ?? 0;
+
+      const effectiveThreshold = threshold + buffer;
+
+      if (quantity > effectiveThreshold) {
+        continue;
+      }
+
+      totalLowStock++;
+      lowStockProducts.push({
+        _id: inventory._id.toString(),
+        product: {
+          _id: inventory.product._id.toString(),
+          name: _inventory.product.name,
+        },
+        variant: {
+          _id: inventory.variant._id.toString(),
+          attributes: _inventory.variant.attributes,
+        },
+        quantity: inventory.quantity,
+        low_stock_threshold: inventory.low_stock_threshold,
+        early_warning_buffer: inventory.early_warning_buffer,
+      });
+    }
+
+    if (totalLowStock) {
+      // this.socketGateway.sendSystemNoticeToAdmin(
+      //   `Có ${totalLowStock} sản phẩm sắp hết hàng, Vui lòng kiểm tra.`,
+      // );
+
+      this.sendMailService.sendInventoryReport(lowStockProducts);
+    }
+
+    return;
   }
 }

@@ -13,6 +13,7 @@ import { InventoryModule } from "./inventory/inventory.module";
 import { StockTransactionModule } from "./stock-transaction/stock-transaction.module";
 import { StockModule } from "./stock/stock.module";
 import { MailModule } from "./mail/mail.module";
+import { CronModule } from "./cron-job/cron.module";
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { MailModule } from "./mail/mail.module";
     StockTransactionModule,
     StockModule,
     MailModule,
+    CronModule,
   ],
 })
 export class ApiModule {}
