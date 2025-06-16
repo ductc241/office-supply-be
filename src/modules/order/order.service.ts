@@ -119,9 +119,11 @@ export class OrderService {
         const ratio = itemTotal / totalLinePrice;
 
         if (matchedItemIds.includes(item.variant)) {
-          item.price -= item.discount_from_coupon / item.quantity;
-          item.discount_from_coupon = Math.round(discount * ratio);
           item.is_coupon_applied = true;
+          item.discount_from_coupon = Math.round(discount * ratio);
+          item.price -= item.discount_from_coupon / item.quantity;
+
+          console.log(item.price);
         }
       });
     }
@@ -134,7 +136,7 @@ export class OrderService {
       subtotal,
       discount,
       total,
-      coupon: dto.coupon || null,
+      coupon: dto.coupon ? new Types.ObjectId(dto.coupon) : null,
       shipping_fee: dto.shipping_fee,
       status: OrderStatus.PENDING,
       payment_method: dto.payment_method,

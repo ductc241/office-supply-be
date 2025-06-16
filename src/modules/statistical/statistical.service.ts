@@ -1,10 +1,15 @@
-import { Injectable } from "@nestjs/common";
+import { BadRequestException, Injectable } from "@nestjs/common";
 import { OrderStatus } from "../order/types/order.enum";
 import { OrderRepository } from "../order/order.repository";
+import { CouponRepository } from "../coupon/coupon.repository";
+import { Types } from "mongoose";
 
 @Injectable()
 export class StatisticalService {
-  constructor(private readonly orderRepository: OrderRepository) {}
+  constructor(
+    private readonly orderRepository: OrderRepository,
+    private readonly couponRepository: CouponRepository,
+  ) {}
 
   async getSummaryStatistics(
     groupBy: "day" | "month" | "year",
@@ -76,7 +81,7 @@ export class StatisticalService {
     return summaryStatistics ? summaryStatistics[0] : null;
   }
 
-  async getProfitChart(
+  async getSummaryChart(
     groupBy: "day" | "month" | "year",
     from?: string,
     to?: string,
@@ -96,13 +101,275 @@ export class StatisticalService {
       {
         $group: {
           _id: {
-            // $dateToString: { format: groupFormat, date: "$createdAt" },
             $dateToString: { format: groupFormat, date: "$completed_at" },
           },
           totalRevenue: {
             $sum: {
               $multiply: ["$items.price", "$items.quantity"],
             },
+          },
+          totalProfit: {
+            $sum: {
+              $multiply: [
+                { $subtract: ["$items.price", "$items.cost_price_at_time"] },
+                "$items.quantity",
+              ],
+            },
+          },
+        },
+      },
+      { $sort: { _id: 1 } },
+    ]);
+  }
+
+  async getTopSellingProducts(
+    from?: string,
+    to?: string,
+    limit = 10,
+    type: "quantity" | "revenue" | "profit" = "quantity",
+  ) {
+    const dateFilter = this.buildDateRangeFilter(from, to);
+
+    const matchStage = {
+      status: OrderStatus.DELIVERED,
+      completed_at: { $ne: null },
+      ...dateFilter,
+    };
+
+    const valueField =
+      type === "revenue"
+        ? {
+            $multiply: ["$items.price", "$items.quantity"],
+          }
+        : type === "profit"
+          ? {
+              $multiply: [
+                { $subtract: ["$items.price", "$items.cost_price_at_time"] },
+                "$items.quantity",
+              ],
+            }
+          : "$items.quantity"; // quantity mặc định
+
+    return this.orderRepository.aggregate([
+      { $match: matchStage },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: "$items.product",
+          totalValue: { $sum: valueField },
+        },
+      },
+      { $sort: { totalValue: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "productInfo",
+        },
+      },
+      { $unwind: "$productInfo" },
+      {
+        $project: {
+          productId: "$_id",
+          productName: "$productInfo.name",
+          total: "$totalValue",
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+  async getTopSellingCategories(
+    from?: string,
+    to?: string,
+    type: "revenue" | "profit" = "revenue",
+    limit = 10,
+  ) {
+    const dateFilter = this.buildDateRangeFilter(from, to);
+
+    const matchStage = {
+      status: OrderStatus.DELIVERED,
+      completed_at: { $ne: null },
+      ...dateFilter,
+    };
+
+    const valueField =
+      type === "revenue"
+        ? {
+            $multiply: ["$items.price", "$items.quantity"],
+          }
+        : {
+            $multiply: [
+              { $subtract: ["$items.price", "$items.cost_price_at_time"] },
+              "$items.quantity",
+            ],
+          };
+
+    return this.orderRepository.aggregate([
+      { $match: matchStage },
+      { $unwind: "$items" },
+      {
+        $lookup: {
+          from: "products",
+          localField: "items.product",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
+        $group: {
+          _id: "$product.category",
+          total: { $sum: valueField },
+        },
+      },
+      { $sort: { total: -1 } },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "category",
+        },
+      },
+      { $unwind: "$category" },
+      {
+        $project: {
+          categoryId: "$_id",
+          categoryName: "$category.name",
+          total: 1,
+          _id: 0,
+        },
+      },
+    ]);
+  }
+
+  async analyzeCouponUsage(couponId: string) {
+    const coupon = await this.couponRepository.findById(couponId);
+    if (!coupon || !coupon.valid_from || !coupon.valid_until) {
+      throw new BadRequestException(
+        "Coupon không hợp lệ hoặc thiếu thời gian hiệu lực",
+      );
+    }
+
+    const matchInPeriod = {
+      completed_at: {
+        $gte: new Date(coupon.valid_from),
+        $lte: new Date(coupon.valid_until),
+      },
+      status: OrderStatus.DELIVERED,
+    };
+
+    const couponOrders = await this.orderRepository.aggregate([
+      {
+        $match: {
+          ...matchInPeriod,
+          coupon: new Types.ObjectId(couponId),
+        },
+      },
+      {
+        $facet: {
+          stats: [
+            {
+              $group: {
+                _id: null,
+                totalRevenue: { $sum: "$total" },
+                totalOrders: { $sum: 1 },
+                totalProfit: {
+                  $sum: {
+                    $sum: {
+                      $map: {
+                        input: "$items",
+                        as: "item",
+                        in: {
+                          $multiply: [
+                            {
+                              $subtract: [
+                                "$$item.price",
+                                "$$item.cost_price_at_time",
+                              ],
+                            },
+                            "$$item.quantity",
+                          ],
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            },
+          ],
+        },
+      },
+      {
+        $project: {
+          totalRevenue: { $arrayElemAt: ["$stats.totalRevenue", 0] },
+          totalOrdersWithCoupon: { $arrayElemAt: ["$stats.totalOrders", 0] },
+          totalProfit: { $arrayElemAt: ["$stats.totalProfit", 0] },
+        },
+      },
+    ]);
+
+    // Tổng đơn hàng trong thời gian coupon hiệu lực
+    const totalOrdersInPeriod = await this.orderRepository.count({
+      ...matchInPeriod,
+    });
+
+    const totalOrdersWithCoupon = couponOrders[0]?.totalOrdersWithCoupon || 0;
+
+    return {
+      couponId,
+      couponCode: coupon.code,
+      period: {
+        from: coupon.valid_from,
+        to: coupon.valid_until,
+      },
+      totalRevenue: couponOrders[0]?.totalRevenue || 0,
+      totalProfit: couponOrders[0]?.totalProfit || 0,
+      totalOrdersInPeriod,
+      totalOrdersWithCoupon,
+      couponUsageRate:
+        totalOrdersInPeriod > 0
+          ? totalOrdersWithCoupon / totalOrdersInPeriod
+          : 0,
+    };
+  }
+
+  async getCouponRevenueChart(
+    couponId: string,
+    groupBy: "day" | "month" = "day",
+  ) {
+    const coupon = await this.couponRepository.findById(couponId);
+    if (!coupon?.valid_from || !coupon?.valid_until) {
+      throw new BadRequestException(
+        "Coupon không hợp lệ hoặc thiếu thời gian hiệu lực",
+      );
+    }
+
+    const matchStage = {
+      coupon: new Types.ObjectId(couponId),
+      completed_at: {
+        $gte: new Date(coupon.valid_from),
+        $lte: new Date(coupon.valid_until),
+      },
+      status: OrderStatus.DELIVERED,
+    };
+
+    const format = this.getGroupFormat(groupBy);
+
+    return this.orderRepository.aggregate([
+      { $match: matchStage },
+      { $unwind: "$items" },
+      {
+        $group: {
+          _id: {
+            $dateToString: { format, date: "$completed_at" },
+          },
+          totalRevenue: {
+            $sum: { $multiply: ["$items.price", "$items.quantity"] },
           },
           totalProfit: {
             $sum: {
@@ -144,6 +411,5 @@ export class StatisticalService {
     }
 
     return Object.keys(filter).length > 0 ? { completed_at: filter } : {};
-    // return Object.keys(filter).length > 0 ? { createdAt: filter } : {};
   }
 }
