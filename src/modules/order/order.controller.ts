@@ -5,6 +5,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
@@ -15,12 +16,27 @@ import { OrderService } from "./order.service";
 import { User } from "src/shared/decorator/current-user.decorator";
 import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderStatusDto } from "./dto/update-status-order.dto";
+import {
+  ApiPagination,
+  IPagination,
+} from "src/shared/pagination/pagination.interface";
+import { Pagination } from "src/shared/pagination/pagination.decorator";
+import { QueryOrderDto } from "./dto/query-order.dto";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller("orders")
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
+
+  @Get("query")
+  @ApiPagination()
+  async getAll(
+    @Pagination() pagination: IPagination,
+    @Query() query: QueryOrderDto,
+  ) {
+    return await this.orderService.query(pagination, query);
+  }
 
   @Post()
   async create(@User() user, @Body() dto: CreateOrderDto) {

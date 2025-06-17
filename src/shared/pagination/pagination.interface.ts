@@ -23,13 +23,13 @@ export interface IPaginationResponse<T> {
 export const ApiPagination =
   () => (target: any, key: string | symbol, descriptor: PropertyDescriptor) => {
     ApiQuery({
-      description: "Page number",
+      description: "Trang hiện tại",
       name: "page",
       required: false,
       type: Number,
     })(target, key, descriptor);
     ApiQuery({
-      description: "Items per page",
+      description: "Số bản ghi trên một trang",
       name: "perPage",
       required: false,
       type: Number,

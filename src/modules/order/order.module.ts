@@ -12,9 +12,10 @@ import { InventoryModule } from "../inventory/inventory.module";
 import { StockTransactionModule } from "../stock-transaction/stock-transaction.module";
 import { MailModule } from "../mail/mail.module";
 import { SocketModule } from "../socket/socket.module";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
 @Module({
-  providers: [OrderRepository, OrderService],
+  providers: [OrderRepository, OrderService, PaginationHeaderHelper],
   controllers: [OrderController],
   imports: [
     MongooseModule.forFeature([{ name: Order.name, schema: OrderSchema }]),

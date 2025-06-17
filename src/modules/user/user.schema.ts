@@ -15,19 +15,16 @@ export class User {
   last_password: string;
 
   @Prop({ default: null })
-  full_name?: string | null;
+  full_name?: string;
 
   @Prop({ default: null })
-  date_of_birth: Date | null;
+  date_of_birth: Date;
 
   @Prop({ enum: ["male", "female", "other"], default: "other" })
   gender: string;
 
   @Prop({ default: null })
-  avatar_url: string | null;
-
-  @Prop({ default: true })
-  is_active: boolean;
+  avatar_url: string;
 
   @Prop({ type: Number, default: 0 })
   total_order: number;
@@ -38,7 +35,7 @@ export class User {
   @Prop({ enum: ["customer", "admin"], default: "customer" })
   user_type: string;
 
-  @Prop({ type: Date })
+  @Prop({ type: Date, default: null })
   last_login_at: Date;
 
   @Prop({ type: Types.ObjectId, ref: "Product", default: [] })
@@ -46,6 +43,12 @@ export class User {
 
   @Prop({ type: Types.ObjectId, ref: "Product", default: [] })
   view_history: Types.ObjectId[];
+
+  @Prop({ default: null })
+  note: string;
+
+  @Prop({ default: true })
+  is_active: boolean;
 
   // @Prop({ enum: ["bronze", "silver", "gold", "platinum"], default: "bronze" })
   // loyaltyLevel: string;

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Cron, CronExpression } from "@nestjs/schedule";
+// import { Cron, CronExpression } from "@nestjs/schedule";
 import { InventoryService } from "../inventory/inventory.service";
 
 @Injectable()
@@ -10,8 +10,8 @@ export class CronService {
   //   this.checkLowStock();
   // }
 
-  @Cron(CronExpression.EVERY_HOUR, { name: "checkLowStock" })
-  async checkLowStock() {
-    return this.inventoryService.checkLowStock();
-  }
+  // @Cron(CronExpression.EVERY_HOUR, { name: "checkLowStock" })
+  // async checkLowStock() {
+  //   return this.inventoryService.checkLowStock();
+  // }
 }

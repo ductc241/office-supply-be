@@ -8,7 +8,7 @@ import { CreateOrderDto } from "./dto/create-order.dto";
 import { UpdateOrderStatusDto } from "./dto/update-status-order.dto";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import { CouponService } from "../coupon/coupon.service";
-import { Types } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import { CouponUsageService } from "../coupon-usage/coupon-usage.service";
 import { OrderStatus } from "./types/order.enum";
 import { InventoryRepository } from "../inventory/inventory.repository";
@@ -16,6 +16,9 @@ import { StockTransactionService } from "../stock-transaction/stock-transaction.
 import { StockTransactionType } from "../stock-transaction/types/stock-transaction.enum";
 import { SendMailService } from "../mail/send-mail.service";
 import { SocketGateway } from "../socket/socket.gateway";
+import { QueryOrderDto } from "./dto/query-order.dto";
+import { IPagination } from "src/shared/pagination/pagination.interface";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
 @Injectable()
 export class OrderService {
@@ -28,7 +31,68 @@ export class OrderService {
     private readonly stockTransactionService: StockTransactionService,
     private readonly sendMailService: SendMailService,
     private readonly socketGateway: SocketGateway,
+    private readonly paginationHeaderHelper: PaginationHeaderHelper,
   ) {}
+
+  async query(pagination: IPagination, query: QueryOrderDto) {
+    let conditions: Record<string, any> = {
+      status: query.status,
+    };
+    let options: QueryOptions = {
+      populate: [
+        {
+          path: "user",
+          select: "full_name email",
+        },
+      ],
+      projection: "user subtotal discount total status",
+      sort: { createdAt: -1 },
+    };
+
+    if (query.order_id) {
+      conditions = { ...conditions, _id: new Types.ObjectId(query.order_id) };
+    }
+
+    if (query.from_date) {
+      conditions = {
+        ...conditions,
+        createdAt: {
+          $gte: new Date(query.from_date),
+        },
+      };
+    }
+
+    if (query.to_date) {
+      conditions = {
+        ...conditions,
+        createdAt: {
+          $lte: new Date(query.to_date).setUTCHours(23, 59, 59, 999),
+        },
+      };
+    }
+
+    if (pagination) {
+      options = {
+        ...options,
+        limit: pagination.perPage,
+        skip: pagination.startIndex,
+      };
+    }
+
+    const [result, totalCount] = await Promise.all([
+      this.orderRepository.find(conditions, options),
+      this.orderRepository.count(conditions),
+    ]);
+    const responseHeaders = this.paginationHeaderHelper.getHeaders(
+      pagination,
+      totalCount ?? 0,
+    );
+
+    return {
+      items: result,
+      headers: responseHeaders,
+    };
+  }
 
   async create(userId: string, dto: CreateOrderDto) {
     const variants = await this.productVariantRepository.find({
@@ -173,7 +237,7 @@ export class OrderService {
     }
 
     //send mail
-    this.sendMailService.senNewOrderMail(order._id.toString());
+    // this.sendMailService.senNewOrderMail(order._id.toString());
 
     return order;
   }

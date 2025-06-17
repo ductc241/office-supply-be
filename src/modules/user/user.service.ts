@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { Types } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import * as bcrypt from "bcryptjs";
 
 import { UserRepository } from "./user.repository";
@@ -13,13 +13,75 @@ import { UpdateUserDto } from "./dto/update-user.dto";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ProductService } from "../product/product.services";
+import { IPagination } from "src/shared/pagination/pagination.interface";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
+import { QueryUserDto } from "./dto/query-user.dto";
+import { replaceQuerySearch } from "src/shared/helpers/common";
 
 @Injectable()
 export class UserService {
   constructor(
     private readonly userRepository: UserRepository,
     private readonly productService: ProductService,
+    private readonly paginationHeaderHelper: PaginationHeaderHelper,
   ) {}
+
+  async query(pagination: IPagination, query: QueryUserDto) {
+    let conditions: Record<string, any> = {
+      user_type: "customer",
+      is_active: query.active,
+    };
+    let options: QueryOptions = {
+      projection: {
+        password: 0,
+        last_password: 0,
+        product_favourites: 0,
+        view_history: 0,
+        user_type: 0,
+        note: 0,
+      },
+      sort: { createdAt: -1 },
+    };
+
+    if (query.full_name) {
+      conditions = {
+        ...conditions,
+        full_name: {
+          $regex: replaceQuerySearch(query.full_name),
+          $options: "i",
+        },
+      };
+    }
+
+    if (query.user_id) {
+      conditions = {
+        ...conditions,
+        _id: new Types.ObjectId(query.user_id),
+      };
+    }
+
+    if (pagination) {
+      options = {
+        ...options,
+        limit: pagination.perPage,
+        skip: pagination.startIndex,
+      };
+    }
+
+    const [result, totalCount] = await Promise.all([
+      this.userRepository.find(conditions, options),
+      this.userRepository.count(conditions),
+    ]);
+    const responseHeaders = this.paginationHeaderHelper.getHeaders(
+      pagination,
+      totalCount ?? 0,
+    );
+
+    return {
+      items: result,
+      headers: responseHeaders,
+    };
+  }
 
   async create(createUserDto: CreateUserDto) {
     return this.userRepository.create(createUserDto);
@@ -37,10 +99,7 @@ export class UserService {
   }
 
   async update(id: string, updateUserDto: UpdateUserDto) {
-    const user = await this.userRepository.updateById(
-      new Types.ObjectId(id),
-      updateUserDto,
-    );
+    const user = await this.userRepository.updateById(id, updateUserDto);
     if (!user) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
     return user;
   }

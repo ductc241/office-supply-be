@@ -5,12 +5,27 @@ import { AuthGuard } from "../auth/auth.guard";
 import { User } from "src/shared/decorator/current-user.decorator";
 import { AddViewHistoryDto } from "./dto/add-view-history.dto";
 import { ChangePasswordDto } from "./dto/change-password.dto";
+import { QueryUserDto } from "./dto/query-user.dto";
+import {
+  ApiPagination,
+  IPagination,
+} from "src/shared/pagination/pagination.interface";
+import { Pagination } from "src/shared/pagination/pagination.decorator";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
 @Controller("user")
 export class UserController {
   constructor(private readonly userService: UserService) {}
+
+  @Get("query")
+  @ApiPagination()
+  async query(
+    @Pagination() pagination: IPagination,
+    @Query() query: QueryUserDto,
+  ) {
+    return await this.userService.query(pagination, query);
+  }
 
   @Get("/get-favourite-products")
   async getFavouriteProducts(@User() user) {

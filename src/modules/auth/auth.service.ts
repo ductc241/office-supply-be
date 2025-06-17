@@ -36,6 +36,10 @@ export class AuthService {
     const isMatch = await bcrypt.compare(dto.password, user.password);
     if (!isMatch) throw new BadRequestException("Sai mật khẩu");
 
+    this.userService.update(user._id.toString(), {
+      last_login_at: new Date(),
+    });
+
     const payload = { sub: user._id, email: user.email };
     return {
       access_token: this.jwtService.sign(payload),
