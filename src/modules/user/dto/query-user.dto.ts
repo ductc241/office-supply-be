@@ -1,8 +1,7 @@
-import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
+import { ApiPropertyOptional } from "@nestjs/swagger";
 import {
-  IsBoolean,
+  IsBooleanString,
   IsMongoId,
-  IsNotEmpty,
   IsOptional,
   IsString,
 } from "class-validator";
@@ -25,12 +24,12 @@ export class QueryUserDto extends BaseQueryDto {
   @IsOptional()
   full_name?: string;
 
-  @ApiProperty({
+  @ApiPropertyOptional({
     type: Boolean,
     description: "Tìm kiểm theo trạng thái user",
     default: true,
   })
-  @IsBoolean()
-  @IsNotEmpty()
-  active: boolean;
+  @IsOptional()
+  @IsBooleanString()
+  active?: string;
 }

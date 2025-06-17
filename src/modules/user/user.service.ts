@@ -29,7 +29,6 @@ export class UserService {
   async query(pagination: IPagination, query: QueryUserDto) {
     let conditions: Record<string, any> = {
       user_type: "customer",
-      is_active: query.active,
     };
     let options: QueryOptions = {
       projection: {
@@ -57,6 +56,14 @@ export class UserService {
       conditions = {
         ...conditions,
         _id: new Types.ObjectId(query.user_id),
+      };
+    }
+
+    if (query.active) {
+      console.log(query.active);
+      conditions = {
+        ...conditions,
+        is_active: query.active === "true",
       };
     }
 
