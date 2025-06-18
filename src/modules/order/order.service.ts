@@ -35,9 +35,7 @@ export class OrderService {
   ) {}
 
   async query(pagination: IPagination, query: QueryOrderDto) {
-    let conditions: Record<string, any> = {
-      status: query.status,
-    };
+    let conditions: Record<string, any> = {};
     let options: QueryOptions = {
       populate: [
         {
@@ -45,9 +43,13 @@ export class OrderService {
           select: "full_name email",
         },
       ],
-      projection: "user subtotal discount total status",
+      projection: "user subtotal discount total status createdAt",
       sort: { createdAt: -1 },
     };
+
+    if (query.status) {
+      conditions = { ...conditions, status: query.status };
+    }
 
     if (query.order_id) {
       conditions = { ...conditions, _id: new Types.ObjectId(query.order_id) };
@@ -66,6 +68,7 @@ export class OrderService {
       conditions = {
         ...conditions,
         createdAt: {
+          ...conditions.createdAt,
           $lte: new Date(query.to_date).setUTCHours(23, 59, 59, 999),
         },
       };
@@ -78,6 +81,8 @@ export class OrderService {
         skip: pagination.startIndex,
       };
     }
+
+    console.log(conditions);
 
     const [result, totalCount] = await Promise.all([
       this.orderRepository.find(conditions, options),

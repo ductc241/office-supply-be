@@ -27,22 +27,18 @@ export class ProductService {
     private readonly paginationHeaderHelper: PaginationHeaderHelper,
   ) {}
 
-  async query(
-    {
-      name,
-      brandIds,
-      productIds,
-      categoryIds,
-      minPrice,
-      maxPrice,
-      specifications,
-      sort,
-      page = 1,
-      perPage = 10,
-    }: QueryProductsDto,
-    // pagination: IPagination,
-  ) {
-    // const { page, perPage } = pagination;
+  async query({
+    name,
+    brandIds,
+    productIds,
+    categoryIds,
+    minPrice,
+    maxPrice,
+    specifications,
+    sort,
+    page = 1,
+    perPage = 10,
+  }: QueryProductsDto) {
     const pagination = createPagination(page, perPage);
     const matchStage: any = {};
 
