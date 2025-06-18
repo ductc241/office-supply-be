@@ -12,7 +12,7 @@ export class QueryUserDto extends BaseQueryDto {
     description: "Tìm kiếm theo ID",
     example: "",
   })
-  @IsMongoId()
+  @IsMongoId({ message: "Mã khách hàng không hợp lệ" })
   @IsOptional()
   user_id?: string;
 
