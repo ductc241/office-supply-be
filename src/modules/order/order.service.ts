@@ -82,8 +82,6 @@ export class OrderService {
       };
     }
 
-    console.log(conditions);
-
     const [result, totalCount] = await Promise.all([
       this.orderRepository.find(conditions, options),
       this.orderRepository.count(conditions),
@@ -191,8 +189,6 @@ export class OrderService {
           item.is_coupon_applied = true;
           item.discount_from_coupon = Math.round(discount * ratio);
           item.price -= item.discount_from_coupon / item.quantity;
-
-          console.log(item.price);
         }
       });
     }
@@ -251,7 +247,7 @@ export class OrderService {
     const order = await this.orderRepository.findOne(
       {
         _id: new Types.ObjectId(orderId),
-        user: new Types.ObjectId(userId),
+        // user: new Types.ObjectId(userId),
       },
       {
         populate: [
