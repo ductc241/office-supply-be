@@ -7,7 +7,7 @@ export class UserLoginDto {
   @IsEmail()
   email: string;
 
-  @ApiProperty({ example: "tacongduc123" })
+  @ApiProperty({ example: "24102000" })
   @IsNotEmpty()
   @MinLength(6)
   password: string;

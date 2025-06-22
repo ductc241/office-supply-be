@@ -19,7 +19,9 @@ export class CategoryService {
   async create(dto: CreateCategoryDto) {
     const existing = await this.categoryRepository.findOne({ name: dto.name });
     if (existing) {
-      throw new BadRequestException("Category name must be unique.");
+      throw new BadRequestException("Category name must be unique.", {
+        cause: [{ field: "name", errors: ["Tên danh mục đã tồn tại"] }],
+      });
     }
 
     let brands = [];
@@ -115,7 +117,7 @@ export class CategoryService {
       categoryMap.set(category._id.toString(), {
         _id: category._id,
         name: category.name,
-        display_name: category.name,
+        level: category.level,
         parent_id: category.parentId ? category.parentId.toString() : "0",
         has_children: false,
         children: [],
@@ -137,6 +139,18 @@ export class CategoryService {
     });
 
     return tree;
+  }
+
+  async getAttributes(categoryId: string) {
+    try {
+      const categories = await this.categoryRepository.findById(categoryId, {
+        projection: { attributes: 1 },
+      });
+
+      return categories.attributes;
+    } catch (error) {
+      throw error;
+    }
   }
 
   async getChild(categoryId: string) {
@@ -221,7 +235,7 @@ export class CategoryService {
     }
   }
 
-  async update(id: string, updates: Partial<{ name: string }>) {
+  async update(id: string, updates: CreateCategoryDto) {
     const category = await this.categoryRepository.findById(id);
     if (!category) throw new NotFoundException("Category not found");
 
@@ -230,7 +244,9 @@ export class CategoryService {
         name: updates.name,
       });
       if (existing) {
-        throw new BadRequestException("Category name must be unique.");
+        throw new BadRequestException("Category name must be unique.", {
+          cause: [{ field: "name", errors: ["Tên danh mục đã tồn tại"] }],
+        });
       }
     }
 

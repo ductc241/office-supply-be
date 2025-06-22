@@ -371,7 +371,7 @@ export class OrderService {
       throw new BadRequestException("Only pending orders can be cancelled");
     }
 
-    // import product + update avg_cost
+    // re-import product
     order.items.forEach(async (orderItem) => {
       const variant = await this.productVariantRepository.findById(
         orderItem.variant,
@@ -385,6 +385,7 @@ export class OrderService {
           orderItem.quantity * orderItem.cost_price_at_time) /
         (inventory.quantity + orderItem.quantity);
 
+      // log + update quantiry
       await this.stockTransactionService.create({
         type: StockTransactionType.ORDER_CANCEL_IMPORT,
         variant_id: orderItem.variant,

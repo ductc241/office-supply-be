@@ -41,7 +41,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
       message: typeof message === "string" ? message : "Error occurred",
       cause: cause,
       timestamp: new Date().toISOString(),
-      errors: details,
+      errors: details || cause,
       // raw: exception,
     });
   }

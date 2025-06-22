@@ -46,21 +46,21 @@ export class CreateProductVariantDto {
   @IsObject()
   attributes?: Record<string, string> | null;
 
-  @ApiProperty({ example: 199000 })
+  @ApiProperty({ example: 150000 })
   @IsNumber()
   base_price: number;
 
-  @ApiProperty({ example: 189000, required: false })
+  @ApiProperty({ example: 100000, required: false })
   @IsOptional()
   @IsNumber()
   min_price?: number;
 
-  @ApiProperty({ example: 209000, required: false })
+  @ApiProperty({ example: 200000, required: false })
   @IsOptional()
   @IsNumber()
   max_price?: number;
 
-  @ApiPropertyOptional({ example: 199000, description: "Giá nhập" })
+  @ApiPropertyOptional({ example: 80000, description: "Giá nhập" })
   @IsOptional()
   @IsNumber()
   cost_price?: number; // có nếu có tồn kho ban đầu

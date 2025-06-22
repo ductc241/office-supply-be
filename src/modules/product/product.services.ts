@@ -178,6 +178,10 @@ export class ProductService {
                   _id: "$brandInfo._id",
                   name: "$brandInfo.name",
                 },
+                category: {
+                  _id: "$categoryInfo._id",
+                  name: "$categoryInfo.name",
+                },
               },
             },
           ],
