@@ -6,10 +6,11 @@ import { InventoryService } from "./inventory.service";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { SocketModule } from "../socket/socket.module";
 import { MailModule } from "../mail/mail.module";
+import { InventoryController } from "./inventory.controller";
 
 @Module({
   providers: [InventoryRepository, InventoryService],
-  controllers: [],
+  controllers: [InventoryController],
   imports: [
     MongooseModule.forFeature([
       { name: Inventory.name, schema: InventorySchema },

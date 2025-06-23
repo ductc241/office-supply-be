@@ -15,7 +15,7 @@ export class Inventory {
   @Prop({ default: false })
   should_track_low_stock: boolean;
 
-  @Prop({ default: null })
+  @Prop({ default: 0 })
   low_stock_threshold?: number;
 
   @Prop({ default: 0 })

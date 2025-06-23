@@ -34,6 +34,83 @@ export class InventoryService {
     return await this.inventoryRepository.findOne(conditions, options);
   }
 
+  async query() {
+    const pipeline: any[] = [
+      {
+        $group: {
+          _id: {
+            product_id: "$product",
+            variant_id: "$variant",
+          },
+          quantity: { $sum: "$quantity" },
+        },
+      },
+
+      {
+        $lookup: {
+          from: "product-variants",
+          localField: "_id.variant_id",
+          foreignField: "_id",
+          as: "variant",
+        },
+      },
+      {
+        $unwind: {
+          path: "$variant",
+        },
+      },
+      {
+        $lookup: {
+          from: "products",
+          localField: "_id.product_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      {
+        $unwind: {
+          path: "$product",
+        },
+      },
+      {
+        $project: {
+          product: {
+            _id: "$_id.product_id",
+            name: "$product.name",
+          },
+          variant_id: "$_id.variant_id",
+          quantity: 1,
+          attributes: "$variant.attributes",
+        },
+      },
+      {
+        $group: {
+          _id: "$product",
+          product: { $first: "$product" },
+          variants: {
+            $push: {
+              _id: "$variant_id",
+              quantity: "$quantity",
+              available_quantity: "$available_quantity",
+              attributes: "$attributes",
+            },
+          },
+          total_quantity: { $sum: "$quantity" },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          product: 1,
+          variants: 1,
+          total_quantity: 1,
+        },
+      },
+    ];
+
+    return this.inventoryRepository.aggregate(pipeline);
+  }
+
   //Cập nhật số lượng tồn kho (dùng cho xuất/nhập kho)
   async updateInventoryQuantity(inventory_id: string, quantity_change: number) {
     const inventory = await this.inventoryRepository.findById(inventory_id);
@@ -69,6 +146,7 @@ export class InventoryService {
     });
   }
 
+  // cronjob function
   async checkLowStock() {
     console.log("start check inventory");
 
