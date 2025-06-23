@@ -35,7 +35,18 @@ export class InventoryService {
   }
 
   async query() {
+    // const matchStage: any = {};
+
+    // if(dto.condition...) {
+    //   matchStage.field = ...
+    // }
+
     const pipeline: any[] = [
+      // {
+      //   $match: {
+      //     should_track_low_stock: true,
+      //   },
+      // },
       {
         $group: {
           _id: {
@@ -43,9 +54,10 @@ export class InventoryService {
             variant_id: "$variant",
           },
           quantity: { $sum: "$quantity" },
+          low_stock_threshold: { $first: "$low_stock_threshold" },
+          should_track_low_stock: { $first: "$should_track_low_stock" },
         },
       },
-
       {
         $lookup: {
           from: "product-variants",
@@ -54,54 +66,49 @@ export class InventoryService {
           as: "variant",
         },
       },
-      {
-        $unwind: {
-          path: "$variant",
-        },
-      },
-      {
-        $lookup: {
-          from: "products",
-          localField: "_id.product_id",
-          foreignField: "_id",
-          as: "product",
-        },
-      },
-      {
-        $unwind: {
-          path: "$product",
-        },
-      },
+      { $unwind: "$variant" },
       {
         $project: {
-          product: {
-            _id: "$_id.product_id",
-            name: "$product.name",
-          },
+          product_id: "$_id.product_id",
           variant_id: "$_id.variant_id",
           quantity: 1,
+          low_stock_threshold: 1,
+          should_track_low_stock: 1,
+
           attributes: "$variant.attributes",
         },
       },
       {
         $group: {
-          _id: "$product",
-          product: { $first: "$product" },
+          _id: "$product_id",
+          total_quantity: { $sum: "$quantity" },
           variants: {
             $push: {
               _id: "$variant_id",
-              quantity: "$quantity",
-              available_quantity: "$available_quantity",
               attributes: "$attributes",
+              quantity: "$quantity",
+              low_stock_threshold: "$low_stock_threshold",
+              should_track_low_stock: "$should_track_low_stock",
             },
           },
-          total_quantity: { $sum: "$quantity" },
         },
       },
       {
+        $lookup: {
+          from: "products",
+          localField: "_id",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+      {
         $project: {
           _id: 0,
-          product: 1,
+          product: {
+            _id: "$_id",
+            name: "$product.name",
+          },
           variants: 1,
           total_quantity: 1,
         },
