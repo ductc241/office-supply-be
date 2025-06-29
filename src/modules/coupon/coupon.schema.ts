@@ -46,7 +46,7 @@ export class Coupon {
   @Prop({ type: [String], ref: "Product", default: null })
   applicable_product_ids: string[] | null;
 
-  @Prop({ type: [String], default: null })
+  @Prop({ type: [String], ref: "Category", default: null })
   applicable_category_ids: string[] | null;
 
   @Prop({ default: true })

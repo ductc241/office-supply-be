@@ -8,6 +8,10 @@ import { StockTransactionType } from "./types/stock-transaction.enum";
 import { CreateStockTransactionDto } from "./dto/create-transaction.dto";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import { InventoryRepository } from "../inventory/inventory.repository";
+import { QueryStockTransactionDto } from "./dto/query-transaction.dto";
+import { QueryOptions } from "mongoose";
+import { IPagination } from "src/shared/pagination/pagination.interface";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
 @Injectable()
 export class StockTransactionService {
@@ -15,6 +19,7 @@ export class StockTransactionService {
     private readonly stockTransactionRepository: StockTransactionRepository,
     private readonly productVariantRepository: ProductVariantRepository,
     private readonly inventoryRepository: InventoryRepository,
+    private readonly paginationHeaderHelper: PaginationHeaderHelper,
   ) {}
 
   async create(payload: CreateStockTransactionDto) {
@@ -34,7 +39,7 @@ export class StockTransactionService {
       variant_id.toString(),
     );
     if (!variant) {
-      throw new NotFoundException("Product variant không tồn tại");
+      throw new NotFoundException("Sản phẩm không tồn tại");
     }
 
     const variantInventory = await this.inventoryRepository.findOne({
@@ -96,5 +101,67 @@ export class StockTransactionService {
     return transaction;
   }
 
-  async query() {}
+  async query(params: QueryStockTransactionDto, pagination: IPagination) {
+    const { product_id, type, reference_id, from_date, to_date } = params;
+    const options: QueryOptions = {
+      populate: [
+        {
+          path: "product",
+          select: "name",
+        },
+        {
+          path: "variant",
+          select: "sku attributes",
+        },
+      ],
+      sort: "-createdAt",
+      limit: pagination.perPage,
+      skip: pagination.startIndex,
+    };
+
+    const conditions: any = {};
+
+    if (product_id) {
+      conditions.product = product_id;
+    }
+
+    if (type) {
+      conditions.type = type;
+    }
+
+    if (reference_id) {
+      conditions.reference_id = reference_id;
+    }
+
+    if (from_date || to_date) {
+      conditions.createdAt = {};
+
+      if (from_date) {
+        const fromDate = new Date(from_date);
+        fromDate.setUTCHours(0, 0, 0, 0);
+        conditions.createdAt.$gte = fromDate;
+      }
+
+      if (to_date) {
+        const toDate = new Date(to_date);
+        toDate.setUTCHours(23, 59, 59, 999);
+        conditions.createdAt.$lte = toDate;
+      }
+    }
+
+    // return this.stockTransactionRepository.find(conditions, options);
+    const [result, totalCount] = await Promise.all([
+      this.stockTransactionRepository.find(conditions, options),
+      this.stockTransactionRepository.count(conditions),
+    ]);
+    const responseHeaders = this.paginationHeaderHelper.getHeaders(
+      pagination,
+      totalCount ?? 0,
+    );
+
+    return {
+      items: result,
+      headers: responseHeaders,
+    };
+  }
 }

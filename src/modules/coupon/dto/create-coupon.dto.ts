@@ -17,7 +17,7 @@ import { Type } from "class-transformer";
 export class CreateCouponDto {
   @ApiProperty()
   @IsString()
-  @MaxLength(10, { message: "Code không được vượt quá 10 ký tự." })
+  @MaxLength(50, { message: "Code không được vượt quá 10 ký tự." })
   code: string;
 
   @ApiProperty({ example: "Coupon for special event" })

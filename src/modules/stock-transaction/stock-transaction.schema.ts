@@ -31,7 +31,7 @@ export class StockTransaction {
   @Prop({ enum: StockTransactionType, required: true })
   type: StockTransactionType;
 
-  @Prop({ type: Types.ObjectId })
+  @Prop({ type: Types.ObjectId, default: null }) // t.tin bổ sung, chỉ có khi nhập, xuất, bán hàng
   reference_id?: Types.ObjectId;
 
   @Prop()

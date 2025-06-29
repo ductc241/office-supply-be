@@ -12,6 +12,11 @@ import { ApplyCouponDto } from "./dto/apply-coupon";
 export class CouponController {
   constructor(private readonly couponService: CouponService) {}
 
+  @Get("/query")
+  async query() {
+    return await this.couponService.query();
+  }
+
   @Post()
   async create(@Body() dto: CreateCouponDto) {
     return await this.couponService.createCoupon(dto);

@@ -1,10 +1,11 @@
-import { Body, Controller, Get, Param, Post } from "@nestjs/common";
+import { Body, Controller, Get, Param, Post, Query } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation } from "@nestjs/swagger";
 
 import { ProductService } from "./product.services";
 
 import { CreateFullProductDto } from "./dto/create-product.dto";
 import { QueryProductsDto } from "./dto/query-product";
+import { QueryProductOptionDto } from "./dto/query-option.dto";
 
 @ApiBearerAuth()
 @Controller("products")
@@ -26,6 +27,11 @@ export class ProductController {
   ) {
     // return await this.productService.query(dto, pagination);
     return await this.productService.query(dto);
+  }
+
+  @Get("query-option")
+  async queryOption(@Query() query: QueryProductOptionDto) {
+    return await this.productService.queryOption(query.name);
   }
 
   @ApiOperation({

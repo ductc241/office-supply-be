@@ -8,10 +8,16 @@ import { StockTransactionRepository } from "./stock-transaction.repository";
 import { StockTransactionService } from "./stock-transaction.service";
 import { ProductVariantModule } from "../product-variant/product-variant.module";
 import { InventoryModule } from "../inventory/inventory.module";
+import { StockTransactionController } from "./stock-transaction.controller";
+import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
 @Module({
-  providers: [StockTransactionRepository, StockTransactionService],
-  controllers: [],
+  providers: [
+    StockTransactionRepository,
+    StockTransactionService,
+    PaginationHeaderHelper,
+  ],
+  controllers: [StockTransactionController],
   imports: [
     MongooseModule.forFeature([
       { name: StockTransaction.name, schema: StockTransactionSchema },

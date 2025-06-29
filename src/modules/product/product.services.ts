@@ -208,6 +208,77 @@ export class ProductService {
     };
   }
 
+  async queryOption(name?: string) {
+    const pipeline: any[] = [
+      // B1: Join từ variants => product
+      {
+        $lookup: {
+          from: "products",
+          localField: "product",
+          foreignField: "_id",
+          as: "product",
+        },
+      },
+      { $unwind: "$product" },
+    ];
+
+    // B2: Nếu có name thì filter theo name
+    if (name) {
+      pipeline.push({
+        $match: {
+          "product.name": {
+            $regex: replaceQuerySearch(name),
+            $options: "i",
+          },
+        },
+      });
+    }
+
+    // B3: Join inventory theo variant._id và product._id
+    pipeline.push(
+      {
+        $lookup: {
+          from: "inventories",
+          let: { productId: "$product._id", variantId: "$_id" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$product", "$$productId"] },
+                    { $eq: ["$variant", "$$variantId"] },
+                  ],
+                },
+              },
+            },
+            { $project: { quantity: 1 } },
+          ],
+          as: "inventory",
+        },
+      },
+      {
+        $unwind: {
+          path: "$inventory",
+          preserveNullAndEmptyArrays: true, // nếu chưa có tồn kho thì quantity = 0
+        },
+      },
+      {
+        $project: {
+          _id: 1, // variant id
+          attributes: 1,
+          quantity: { $ifNull: ["$inventory.quantity", 0] },
+          product: {
+            _id: "$product._id",
+            name: "$product.name",
+          },
+        },
+      },
+    );
+
+    const results = await this.productVariantRepository.aggregate(pipeline);
+    return results;
+  }
+
   async findOne(conditions: any, options?: QueryOptions) {
     const product = await this.productRepository.findOne(conditions, options);
     return product;

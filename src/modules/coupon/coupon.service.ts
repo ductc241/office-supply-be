@@ -20,6 +20,38 @@ export class CouponService {
     private readonly cartService: CartService,
   ) {}
 
+  async query() {
+    const coupons = await this.couponRepository.find(
+      {},
+      {
+        populate: [
+          {
+            path: "applicable_product_ids",
+            select: "name",
+          },
+          {
+            path: "applicable_category_ids",
+            select: "name",
+          },
+        ],
+      },
+    );
+
+    const response = coupons.map((coupon) => {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { applicable_category_ids, applicable_product_ids, ...data } =
+        coupon.toObject();
+
+      return {
+        ...data,
+        product: coupon.applicable_product_ids,
+        categories: coupon.applicable_category_ids,
+      };
+    });
+
+    return response;
+  }
+
   async createCoupon(createCouponDto: CreateCouponDto) {
     try {
       // Validate coupon data before creation
