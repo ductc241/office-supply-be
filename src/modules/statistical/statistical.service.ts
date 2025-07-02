@@ -11,11 +11,7 @@ export class StatisticalService {
     private readonly couponRepository: CouponRepository,
   ) {}
 
-  async getSummaryStatistics(
-    groupBy: "day" | "month" | "year",
-    from?: string,
-    to?: string,
-  ) {
+  async getSummaryStatistics(from?: string, to?: string) {
     const dateFilter = this.buildDateRangeFilter(from, to);
     const matchStage = {
       status: OrderStatus.DELIVERED,
@@ -23,21 +19,11 @@ export class StatisticalService {
       ...dateFilter,
     };
 
-    const groupFormat = this.getGroupFormat(groupBy);
-
-    const pipeline: any[] = [{ $match: matchStage }];
-
-    pipeline.push(
-      {
-        $addFields: {
-          groupKey: {
-            $dateToString: { format: groupFormat, date: "$completed_at" },
-          },
-        },
-      },
+    const pipeline: any[] = [
+      { $match: matchStage },
       {
         $group: {
-          _id: "$groupKey",
+          _id: null,
           totalRevenue: { $sum: "$total" },
           totalOrders: { $sum: 1 },
           totalProfit: {
@@ -64,7 +50,11 @@ export class StatisticalService {
         },
       },
       {
-        $addFields: {
+        $project: {
+          _id: 0,
+          totalRevenue: 1,
+          totalOrders: 1,
+          totalProfit: 1,
           averageRevenuePerOrder: {
             $cond: [
               { $eq: ["$totalOrders", 0] },
@@ -74,12 +64,59 @@ export class StatisticalService {
           },
         },
       },
-      { $sort: { _id: 1 } },
-    );
+    ];
 
-    const summaryStatistics = await this.orderRepository.aggregate(pipeline);
-    return summaryStatistics ? summaryStatistics[0] : null;
+    const result = await this.orderRepository.aggregate(pipeline);
+    return (
+      result[0] || {
+        totalRevenue: 0,
+        totalOrders: 0,
+        totalProfit: 0,
+        averageRevenuePerOrder: 0,
+      }
+    );
   }
+
+  // async getSummaryChart(
+  //   groupBy: "day" | "month" | "year",
+  //   from?: string,
+  //   to?: string,
+  // ) {
+  //   const dateFilter = this.buildDateRangeFilter(from, to);
+  //   const matchStage = {
+  //     status: OrderStatus.DELIVERED,
+  //     completed_at: { $ne: null },
+  //     ...dateFilter,
+  //   };
+
+  //   const groupFormat = this.getGroupFormat(groupBy);
+
+  //   return this.orderRepository.aggregate([
+  //     { $match: matchStage },
+  //     { $unwind: "$items" },
+  //     {
+  //       $group: {
+  //         _id: {
+  //           $dateToString: { format: groupFormat, date: "$completed_at" },
+  //         },
+  //         totalRevenue: {
+  //           $sum: {
+  //             $multiply: ["$items.price", "$items.quantity"],
+  //           },
+  //         },
+  //         totalProfit: {
+  //           $sum: {
+  //             $multiply: [
+  //               { $subtract: ["$items.price", "$items.cost_price_at_time"] },
+  //               "$items.quantity",
+  //             ],
+  //           },
+  //         },
+  //       },
+  //     },
+  //     { $sort: { _id: 1 } },
+  //   ]);
+  // }
 
   async getSummaryChart(
     groupBy: "day" | "month" | "year",
@@ -97,12 +134,17 @@ export class StatisticalService {
 
     return this.orderRepository.aggregate([
       { $match: matchStage },
+      {
+        $addFields: {
+          groupKey: {
+            $dateToString: { format: groupFormat, date: "$completed_at" },
+          },
+        },
+      },
       { $unwind: "$items" },
       {
         $group: {
-          _id: {
-            $dateToString: { format: groupFormat, date: "$completed_at" },
-          },
+          _id: "$groupKey",
           totalRevenue: {
             $sum: {
               $multiply: ["$items.price", "$items.quantity"],
@@ -116,6 +158,17 @@ export class StatisticalService {
               ],
             },
           },
+          orderIds: { $addToSet: "$_id" }, // thu thập id đơn hàng duy nhất
+        },
+      },
+      {
+        $addFields: {
+          totalOrders: { $size: "$orderIds" }, // đếm số đơn hàng duy nhất
+        },
+      },
+      {
+        $project: {
+          orderIds: 0, // loại bỏ mảng id nếu không cần
         },
       },
       { $sort: { _id: 1 } },
