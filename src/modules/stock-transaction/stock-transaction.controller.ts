@@ -2,7 +2,10 @@ import { Controller, Get, Query } from "@nestjs/common";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { QueryStockTransactionDto } from "./dto/query-transaction.dto";
 import { StockTransactionService } from "./stock-transaction.service";
-import { IPagination } from "src/shared/pagination/pagination.interface";
+import {
+  ApiPagination,
+  IPagination,
+} from "src/shared/pagination/pagination.interface";
 import { Pagination } from "src/shared/pagination/pagination.decorator";
 
 @ApiBearerAuth()
@@ -13,9 +16,10 @@ export class StockTransactionController {
   ) {}
 
   @Get("query")
+  @ApiPagination()
   async query(
-    @Query() dto: QueryStockTransactionDto,
     @Pagination() pagination: IPagination,
+    @Query() dto: QueryStockTransactionDto,
   ) {
     return await this.stockTransactionService.query(dto, pagination);
   }

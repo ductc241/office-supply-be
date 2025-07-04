@@ -48,6 +48,11 @@ export class OrderController {
     return await this.orderService.getOrdersForUser(user.sub);
   }
 
+  @Get("get-orders/product/:productId")
+  async getOrdersByProduct(@Param("productId") productId: string) {
+    return this.orderService.getOrdersByProductId(productId);
+  }
+
   @Get("get-detail/:orderId")
   async getDetail(@User() user, @Param("orderId") orderId: string) {
     return await this.orderService.getOrderDetail(user.sub, orderId);

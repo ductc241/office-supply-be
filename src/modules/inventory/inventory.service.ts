@@ -3,10 +3,11 @@ import { InventoryRepository } from "./inventory.repository";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { CreateInventoryDto } from "./dto/create-inventory.dto";
-import { QueryOptions } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import { SocketGateway } from "../socket/socket.gateway";
 import { SendMailService } from "../mail/send-mail.service";
 import { InvetoryItem } from "../mail/type/mail.type";
+import { QueryInventoryDto } from "./dto/query-inventory.dto";
 
 @Injectable()
 export class InventoryService {
@@ -34,19 +35,17 @@ export class InventoryService {
     return await this.inventoryRepository.findOne(conditions, options);
   }
 
-  async query() {
-    // const matchStage: any = {};
+  async query(dto: QueryInventoryDto) {
+    const matchStage: any = {};
 
-    // if(dto.condition...) {
-    //   matchStage.field = ...
-    // }
+    if (dto.product_id) {
+      matchStage.product = new Types.ObjectId(dto.product_id);
+    }
 
     const pipeline: any[] = [
-      // {
-      //   $match: {
-      //     should_track_low_stock: true,
-      //   },
-      // },
+      {
+        $match: matchStage,
+      },
       {
         $group: {
           _id: {

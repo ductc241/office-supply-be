@@ -9,7 +9,7 @@ import { CreateStockTransactionDto } from "./dto/create-transaction.dto";
 import { ProductVariantRepository } from "../product-variant/product-variant.repository";
 import { InventoryRepository } from "../inventory/inventory.repository";
 import { QueryStockTransactionDto } from "./dto/query-transaction.dto";
-import { QueryOptions } from "mongoose";
+import { QueryOptions, Types } from "mongoose";
 import { IPagination } from "src/shared/pagination/pagination.interface";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
 
@@ -114,7 +114,7 @@ export class StockTransactionService {
           select: "sku attributes",
         },
       ],
-      sort: "-createdAt",
+      // sort: "-createdAt",
       limit: pagination.perPage,
       skip: pagination.startIndex,
     };
@@ -122,7 +122,7 @@ export class StockTransactionService {
     const conditions: any = {};
 
     if (product_id) {
-      conditions.product = product_id;
+      conditions.product = new Types.ObjectId(product_id);
     }
 
     if (type) {

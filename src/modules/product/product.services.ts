@@ -316,8 +316,9 @@ export class ProductService {
       {
         projection: {
           attributes: 1,
-          stock: 1,
           base_price: 1,
+          average_cost_price: 1,
+          last_cost_price: 1,
         },
       },
     );

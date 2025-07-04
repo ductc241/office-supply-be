@@ -36,7 +36,7 @@ export class ProductController {
 
   @ApiOperation({
     summary:
-      "web - get product detail with all variants - work with category level 2",
+      "web - get product detail with available variants - work with category level 2",
   })
   @Get("get-detail/:productId")
   async getDetail(@Param("productId") productId: string) {

@@ -1,8 +1,9 @@
 import { IsEnum, IsOptional, IsString, IsDateString } from "class-validator";
 import { StockTransactionType } from "../types/stock-transaction.enum";
 import { ApiPropertyOptional } from "@nestjs/swagger";
+import { BaseQueryDto } from "src/shared/pagination/pagination.dto";
 
-export class QueryStockTransactionDto {
+export class QueryStockTransactionDto extends BaseQueryDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()

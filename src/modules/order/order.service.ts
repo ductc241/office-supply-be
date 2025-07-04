@@ -305,6 +305,65 @@ export class OrderService {
     );
   }
 
+  async getOrdersByProductId(productId: string) {
+    const objectId = new Types.ObjectId(productId);
+
+    // Chỉ lấy các đơn hàng có chứa sản phẩm cần lọc
+    const orders = await this.orderRepository.find(
+      {
+        "items.product": objectId,
+      },
+      {
+        projection: {
+          _id: 1,
+          total: 1,
+          items: 1,
+          status: 1,
+        },
+      },
+    );
+
+    const results = [];
+
+    for (const order of orders) {
+      // Lọc các item trong đơn hàng có liên quan đến productId
+      const matchedItems = order.items.filter(
+        (item) => item.product.toString() === productId,
+      );
+
+      const totalProductRevenue = matchedItems.reduce(
+        (sum, item) => sum + item.price * item.quantity,
+        0,
+      );
+
+      const totalProductProfit = matchedItems.reduce(
+        (sum, item) =>
+          sum + (item.price - item.cost_price_at_time) * item.quantity,
+        0,
+      );
+
+      const totalQuantity = matchedItems.reduce(
+        (sum, item) => sum + item.quantity,
+        0,
+      );
+
+      const valueRatio =
+        order.total > 0 ? (totalProductRevenue / order.total) * 100 : 0;
+
+      results.push({
+        order_id: order._id,
+        quantity: totalQuantity,
+        revenue: totalProductRevenue,
+        profit: totalProductProfit,
+        order_total: order.total,
+        value_ratio: Number(valueRatio.toFixed(4)), // tỷ lệ giá trị sản phẩm trong đơn hàng
+        status: order.status,
+      });
+    }
+
+    return results;
+  }
+
   async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
     const now = new Date();
     const update: any = { status: dto.status };
