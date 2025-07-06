@@ -34,7 +34,6 @@ export class UserController {
 
   @Get("/get-view-history")
   async getUserViewHistory(@User() user, @Query("limit") limit: string) {
-    console.log(limit);
     return await this.userService.getUserViewHistory(
       user.sub,
       Number(limit) ?? 10,

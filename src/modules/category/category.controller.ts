@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Param, Patch, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from "@nestjs/common";
 import { CategoryService } from "./category.service";
 
 import { CreateCategoryDto } from "./dto/create-category.dto";
@@ -67,4 +75,13 @@ export class CategoryController {
   // remove(@Param("id") id: string) {
   //   return this.brandService.remove(id);
   // }
+
+  @Get("top-categories")
+  async getTopCategories(@Query("limit") limit?: string) {
+    const topCategories =
+      await this.categoryService.getTopCategoriesByProductCount(
+        limit ? parseInt(limit, 10) : 10,
+      );
+    return topCategories;
+  }
 }

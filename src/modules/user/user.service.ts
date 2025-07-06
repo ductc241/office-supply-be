@@ -60,7 +60,6 @@ export class UserService {
     }
 
     if (query.active) {
-      console.log(query.active);
       conditions = {
         ...conditions,
         is_active: query.active === "true",
@@ -177,9 +176,8 @@ export class UserService {
   }
 
   async addProductToViewHistory(userId: string, productId: string) {
-    console.log(productId);
     await this.userRepository.updateById(userId, {
-      $pull: { view_history: productId },
+      $pull: { view_history: new Types.ObjectId(productId) },
     });
 
     await this.userRepository.updateById(userId, {

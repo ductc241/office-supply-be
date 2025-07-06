@@ -8,12 +8,14 @@ import { Types } from "mongoose";
 import { CreateCategoryDto } from "./dto/create-category.dto";
 import { BrandService } from "../brand/brand.service";
 import ERROR_MESSAGE from "src/shared/constants/error";
+import { ProductRepository } from "../product/product.repository";
 
 @Injectable()
 export class CategoryService {
   constructor(
     private readonly categoryRepository: CategoryRepository,
     private readonly brandService: BrandService,
+    private readonly productRepository: ProductRepository,
   ) {}
 
   async create(dto: CreateCategoryDto) {
@@ -281,5 +283,47 @@ export class CategoryService {
     }
 
     return deleted;
+  }
+
+  async getTopCategoriesByProductCount(limit = 10) {
+    const pipeline = [
+      {
+        $group: {
+          _id: "$category",
+          productCount: { $sum: 1 },
+        },
+      },
+      {
+        $sort: {
+          productCount: -1,
+        },
+      },
+      {
+        $limit: limit,
+      },
+      {
+        $lookup: {
+          from: "categories",
+          localField: "_id",
+          foreignField: "_id",
+          as: "categoryInfo",
+        },
+      },
+      {
+        $unwind: "$categoryInfo",
+      },
+      {
+        $project: {
+          _id: 0,
+          categoryId: "$categoryInfo._id",
+          name: "$categoryInfo.name",
+          logo: "$categoryInfo.logo",
+          productCount: 1,
+        },
+      },
+    ];
+
+    const results = await this.productRepository.aggregate(pipeline);
+    return results;
   }
 }
