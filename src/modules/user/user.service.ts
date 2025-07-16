@@ -94,7 +94,7 @@ export class UserService {
   }
 
   async findById(id: string) {
-    const user = await this.userRepository.findById(new Types.ObjectId(id));
+    const user = await this.userRepository.findById(id);
     if (!user) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
     return user;
   }
@@ -155,7 +155,7 @@ export class UserService {
 
   async addProductToFavourites(userId: string, productId: string) {
     await this.userRepository.updateById(userId, {
-      $addToSet: { productFavourites: productId },
+      $addToSet: { product_favourites: productId },
     });
   }
 
@@ -172,22 +172,34 @@ export class UserService {
       },
     });
 
-    return user?.product_favourites || [];
+    return this.productService.query({
+      productIds: user.product_favourites.map((i) => i.toString()) || [],
+    });
   }
 
   async addProductToViewHistory(userId: string, productId: string) {
-    await this.userRepository.updateById(userId, {
-      $pull: { view_history: new Types.ObjectId(productId) },
-    });
-
-    await this.userRepository.updateById(userId, {
-      $push: {
-        view_history: {
-          $each: [productId],
-          $position: 0,
+    await this.userRepository.updateOne({ _id: userId }, [
+      {
+        $set: {
+          view_history: {
+            $slice: [
+              {
+                $concatArrays: [
+                  [new Types.ObjectId(productId)],
+                  {
+                    $filter: {
+                      input: "$view_history",
+                      cond: { $ne: ["$$this", new Types.ObjectId(productId)] },
+                    },
+                  },
+                ],
+              },
+              20, // Giới hạn 20 sản phẩm gần nhất
+            ],
+          },
         },
       },
-    });
+    ]);
   }
 
   async getUserViewHistory(userId: string, limit = 20) {
@@ -201,6 +213,20 @@ export class UserService {
     if (user?.view_history.length === 0) return [];
 
     const productIds = user.view_history.map((id) => id.toString());
-    return this.productService.query({ productIds, perPage: limit });
+    const products = this.productService.query({ productIds, perPage: limit });
+
+    const productMap = new Map(
+      (await products).items.map((p) => [p._id.toString(), p]),
+    );
+
+    const sortedProducts = productIds
+      .map((id) => productMap.get(id))
+      .filter(Boolean);
+
+    return { items: sortedProducts, headers: (await products).headers };
+  }
+
+  async getProfile(userId: string) {
+    return this.userRepository.findById(userId);
   }
 }

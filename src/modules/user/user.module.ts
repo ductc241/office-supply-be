@@ -14,6 +14,6 @@ import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper"
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
     ProductModule,
   ],
-  exports: [UserService],
+  exports: [UserService, UserRepository],
 })
 export class UserModule {}

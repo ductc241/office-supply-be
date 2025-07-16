@@ -1,33 +1,24 @@
 import { ApiPropertyOptional } from "@nestjs/swagger";
 import { IsEnum, IsMongoId, IsOptional } from "class-validator";
-import { BaseQueryDto } from "src/shared/pagination/pagination.dto";
-import { OrderStatus } from "../types/order.enum";
+import { SummaryGroup } from "../type/inde";
 
-export class QueryOrderDto extends BaseQueryDto {
-  @ApiPropertyOptional({
-    description: "Tìm kiếm theo ID đơn hàng",
-    example: "",
-  })
-  @IsMongoId()
-  @IsOptional()
-  order_id?: string;
-
+export class SummaryChartDto {
   @ApiPropertyOptional({
     description: "Tìm kiếm theo user ID",
     example: "",
   })
   @IsMongoId()
   @IsOptional()
-  user_id?: string;
+  userId?: string;
 
   @ApiPropertyOptional({
     type: String,
-    enum: OrderStatus,
+    enum: SummaryGroup,
     description: "Tìm kiểm theo trạng thái đơn hàng",
   })
   @IsOptional()
-  @IsEnum(OrderStatus)
-  status?: OrderStatus;
+  @IsEnum(SummaryGroup)
+  group_by?: SummaryGroup;
 
   @ApiPropertyOptional({
     description: "Tìm kiếm ngày",

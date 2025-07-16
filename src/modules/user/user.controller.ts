@@ -1,4 +1,12 @@
-import { Body, Controller, Get, Patch, Query, UseGuards } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  UseGuards,
+} from "@nestjs/common";
 import { ApiBearerAuth } from "@nestjs/swagger";
 import { UserService } from "./user.service";
 import { AuthGuard } from "../auth/auth.guard";
@@ -11,6 +19,7 @@ import {
   IPagination,
 } from "src/shared/pagination/pagination.interface";
 import { Pagination } from "src/shared/pagination/pagination.decorator";
+import { UpdateUserDto } from "./dto/update-user.dto";
 
 @ApiBearerAuth()
 @UseGuards(AuthGuard)
@@ -25,6 +34,11 @@ export class UserController {
     @Query() query: QueryUserDto,
   ) {
     return await this.userService.query(pagination, query);
+  }
+
+  @Patch("/update")
+  async update(@Body() dto: UpdateUserDto, @Query("userId") userId?: string) {
+    return await this.userService.update(userId, dto);
   }
 
   @Get("/get-favourite-products")
@@ -65,5 +79,20 @@ export class UserController {
   @Patch("/change-password")
   async changePassword(@User() user, @Body() dto: ChangePasswordDto) {
     return await this.userService.changePassword(user.sub, dto);
+  }
+
+  @Get("/get-detail/:id")
+  async findById(@Param("id") id: string) {
+    return await this.userService.findById(id);
+  }
+
+  @Get("/get-profile")
+  async getProfile(@User() user) {
+    return await this.userService.getProfile(user.sub);
+  }
+
+  @Patch("/update-profile")
+  async updateProfile(@User() user, @Body() dto: UpdateUserDto) {
+    return await this.userService.update(user.sub, dto);
   }
 }

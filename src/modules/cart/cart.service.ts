@@ -1,14 +1,22 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from "@nestjs/common";
 import { Types } from "mongoose";
 
 import { CartRepository } from "./cart.repository";
 import { AddCartItemDto } from "./dto/add-cart-item.dto";
 import ERROR_MESSAGE from "src/shared/constants/error";
 import { DecreaseCartItemDto } from "./dto/decrease-cart-item.dto";
+import { InventoryService } from "../inventory/inventory.service";
 
 @Injectable()
 export class CartService {
-  constructor(private readonly cartRepositoy: CartRepository) {}
+  constructor(
+    private readonly cartRepositoy: CartRepository,
+    private readonly inventoryService: InventoryService,
+  ) {}
 
   async get(userId: string) {
     try {
@@ -77,6 +85,15 @@ export class CartService {
     const cart = await this.cartRepositoy.findOne({ user: userObjectId });
     if (!cart) throw new NotFoundException(ERROR_MESSAGE.NOT_FOUND);
 
+    const inventory = await this.inventoryService.findOne({
+      variant: new Types.ObjectId(dto.variant_id),
+    });
+    if (!inventory) throw new NotFoundException();
+
+    if (inventory.quantity <= inventory.low_stock_threshold) {
+      throw new BadRequestException("The product is out of stock");
+    }
+
     const existingItem = cart.items.find((item) =>
       item.variant.equals(variantObjectId),
     );
@@ -132,9 +149,11 @@ export class CartService {
       );
     }
 
-    const updatedCart = await this.cartRepositoy.findOne({
+    await this.cartRepositoy.findOne({
       user: userObjectId,
     });
+
+    const updatedCart = await this.get(user_id);
     return updatedCart.items;
   }
 }

@@ -47,7 +47,7 @@ export class ProductController {
     summary: "web - get specification values for filter products",
   })
   @Get("get-specifications/:categoryId")
-  async getAvailableProductAttributes(@Param("categoryId") id: string) {
+  async getUniqueSpecValuesByCategory(@Param("categoryId") id: string) {
     return await this.productService.getUniqueSpecValuesByCategory(id);
   }
 

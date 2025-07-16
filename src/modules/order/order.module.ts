@@ -13,6 +13,7 @@ import { StockTransactionModule } from "../stock-transaction/stock-transaction.m
 import { MailModule } from "../mail/mail.module";
 import { SocketModule } from "../socket/socket.module";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
+import { UserModule } from "../user/user.module";
 
 @Module({
   providers: [OrderRepository, OrderService, PaginationHeaderHelper],
@@ -22,6 +23,7 @@ import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper"
     CouponModule,
     CouponUsageModule,
     ProductVariantModule,
+    UserModule,
     InventoryModule,
     StockTransactionModule,
     MailModule,

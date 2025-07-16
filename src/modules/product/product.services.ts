@@ -323,8 +323,31 @@ export class ProductService {
       },
     );
 
-    const attributesMap = {};
+    const productVariantInventories = await this.inventoryService.find(
+      {
+        variant: {
+          $in: productVariants.map((pv) => pv._id),
+        },
+      },
+      {
+        projection: "quantity variant",
+      },
+    );
 
+    // map inventory quantity
+    const productVariantWithQuantity = productVariants.map((pv) => {
+      const inventory = productVariantInventories.find(
+        (pvi) => pvi.variant.toString() === pv._id.toString(),
+      );
+
+      return {
+        ...pv.toObject(),
+        quantity: inventory?.quantity || 0,
+      };
+    });
+
+    // get unique attributes
+    const attributesMap = {};
     for (const variant of productVariants) {
       const attributes = variant.attributes || {};
       for (const [key, value] of Object.entries(attributes)) {
@@ -336,12 +359,14 @@ export class ProductService {
     }
 
     const availableAttributes: Record<string, any[]> = {};
-
     for (const key in attributesMap) {
       availableAttributes[key] = Array.from(attributesMap[key]);
     }
 
-    return { attributes: availableAttributes, variants: productVariants };
+    return {
+      attributes: availableAttributes,
+      variants: productVariantWithQuantity,
+    };
   }
 
   async getUniqueSpecValuesByCategory(categoryId: string) {

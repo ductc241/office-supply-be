@@ -1,22 +1,21 @@
 import { Controller, Get, Param, Query } from "@nestjs/common";
 import { StatisticalService } from "./statistical.service";
+import { SummaryOrderDto } from "./dto/summary-order";
+import { SummaryChartDto } from "./dto/summary-chart.dto";
+import { SummaryGroup } from "./type/inde";
 
 @Controller("statistical")
 export class StatisticalController {
   constructor(private readonly statisticalService: StatisticalService) {}
 
   @Get("summary")
-  getSummaryStatistics(@Query("from") from?: string, @Query("to") to?: string) {
-    return this.statisticalService.getSummaryStatistics(from, to);
+  getSummaryStatistics(@Query() dto: SummaryOrderDto) {
+    return this.statisticalService.getSummaryStatistics(dto);
   }
 
   @Get("summary/chart")
-  getSummaryChart(
-    @Query("groupBy") groupBy: "day" | "month" | "year" = "day",
-    @Query("from") from?: string,
-    @Query("to") to?: string,
-  ) {
-    return this.statisticalService.getSummaryChart(groupBy, from, to);
+  getSummaryChart(@Query() dto: SummaryChartDto) {
+    return this.statisticalService.getSummaryChart(dto);
   }
 
   @Get("top-selling-products")
@@ -57,7 +56,8 @@ export class StatisticalController {
   @Get("coupon/:couponId/chart")
   getCouponChart(
     @Param("couponId") couponId: string,
-    @Query("groupBy") groupBy: "day" | "month" = "day",
+    @Query("groupBy")
+    groupBy: SummaryGroup.DAY | SummaryGroup.MONTH = SummaryGroup.DAY,
   ) {
     return this.statisticalService.getCouponRevenueChart(couponId, groupBy);
   }

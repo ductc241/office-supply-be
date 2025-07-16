@@ -3,6 +3,9 @@ import { OrderStatus } from "../order/types/order.enum";
 import { OrderRepository } from "../order/order.repository";
 import { CouponRepository } from "../coupon/coupon.repository";
 import { Types } from "mongoose";
+import { SummaryOrderDto } from "./dto/summary-order";
+import { SummaryChartDto } from "./dto/summary-chart.dto";
+import { SummaryGroup } from "./type/inde";
 
 @Injectable()
 export class StatisticalService {
@@ -11,13 +14,17 @@ export class StatisticalService {
     private readonly couponRepository: CouponRepository,
   ) {}
 
-  async getSummaryStatistics(from?: string, to?: string) {
-    const dateFilter = this.buildDateRangeFilter(from, to);
-    const matchStage = {
+  async getSummaryStatistics(dto: SummaryOrderDto) {
+    const dateFilter = this.buildDateRangeFilter(dto.from_date, dto.to_date);
+    const matchStage: Record<string, any> = {
       status: OrderStatus.DELIVERED,
       completed_at: { $ne: null },
       ...dateFilter,
     };
+
+    if (dto.userId) {
+      matchStage.user = new Types.ObjectId(dto.userId);
+    }
 
     const pipeline: any[] = [
       { $match: matchStage },
@@ -118,19 +125,15 @@ export class StatisticalService {
   //   ]);
   // }
 
-  async getSummaryChart(
-    groupBy: "day" | "month" | "year",
-    from?: string,
-    to?: string,
-  ) {
-    const dateFilter = this.buildDateRangeFilter(from, to);
+  async getSummaryChart(dto: SummaryChartDto) {
+    const dateFilter = this.buildDateRangeFilter(dto.from_date, dto.to_date);
     const matchStage = {
       status: OrderStatus.DELIVERED,
       completed_at: { $ne: null },
       ...dateFilter,
     };
 
-    const groupFormat = this.getGroupFormat(groupBy);
+    const groupFormat = this.getGroupFormat(dto.group_by || SummaryGroup.DAY);
 
     return this.orderRepository.aggregate([
       { $match: matchStage },
@@ -393,7 +396,7 @@ export class StatisticalService {
 
   async getCouponRevenueChart(
     couponId: string,
-    groupBy: "day" | "month" = "day",
+    groupBy: SummaryGroup.DAY | SummaryGroup.MONTH = SummaryGroup.DAY,
   ) {
     const coupon = await this.couponRepository.findById(couponId);
     if (!coupon?.valid_from || !coupon?.valid_until) {
@@ -438,13 +441,13 @@ export class StatisticalService {
     ]);
   }
 
-  private getGroupFormat(groupBy: "day" | "month" | "year") {
+  private getGroupFormat(groupBy: SummaryGroup) {
     switch (groupBy) {
-      case "day":
+      case SummaryGroup.DAY:
         return "%Y-%m-%d";
-      case "month":
+      case SummaryGroup.MONTH:
         return "%Y-%m";
-      case "year":
+      case SummaryGroup.YEAR:
         return "%Y";
       default:
         return null;

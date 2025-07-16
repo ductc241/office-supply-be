@@ -19,11 +19,13 @@ import { SocketGateway } from "../socket/socket.gateway";
 import { QueryOrderDto } from "./dto/query-order.dto";
 import { IPagination } from "src/shared/pagination/pagination.interface";
 import { PaginationHeaderHelper } from "src/shared/pagination/pagination.helper";
+import { UserRepository } from "../user/user.repository";
 
 @Injectable()
 export class OrderService {
   constructor(
     private readonly orderRepository: OrderRepository,
+    private readonly userRepository: UserRepository,
     private readonly couponService: CouponService,
     private readonly couponUsageService: CouponUsageService,
     private readonly productVariantRepository: ProductVariantRepository,
@@ -53,6 +55,10 @@ export class OrderService {
 
     if (query.order_id) {
       conditions = { ...conditions, _id: new Types.ObjectId(query.order_id) };
+    }
+
+    if (query.user_id) {
+      conditions = { ...conditions, user: new Types.ObjectId(query.user_id) };
     }
 
     if (query.from_date) {
@@ -386,6 +392,15 @@ export class OrderService {
       );
     }
 
+    if (dto.status === OrderStatus.DELIVERED) {
+      await this.userRepository.updateById(order.user.toString(), {
+        $inc: {
+          total_order: 1,
+          total_shopping_amount: order.total,
+        },
+      });
+    }
+
     if (
       order.status === OrderStatus.CANCELLED ||
       order.status === OrderStatus.REFUNDED
@@ -420,6 +435,49 @@ export class OrderService {
     const order = await this.orderRepository.findOne({
       _id: new Types.ObjectId(orderId),
       user: new Types.ObjectId(userId),
+    });
+
+    if (!order) {
+      throw new NotFoundException("Order not found");
+    }
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException("Only pending orders can be cancelled");
+    }
+
+    // re-import product
+    order.items.forEach(async (orderItem) => {
+      const variant = await this.productVariantRepository.findById(
+        orderItem.variant,
+      );
+      const inventory = await this.inventoryRepository.findOne({
+        variant: new Types.ObjectId(orderItem.variant),
+      });
+
+      const new_average_cost_price =
+        (inventory.quantity * variant.average_cost_price +
+          orderItem.quantity * orderItem.cost_price_at_time) /
+        (inventory.quantity + orderItem.quantity);
+
+      // log + update quantiry
+      await this.stockTransactionService.create({
+        type: StockTransactionType.ORDER_CANCEL_IMPORT,
+        variant_id: orderItem.variant,
+        product_id: orderItem.product,
+        quantity: orderItem.quantity,
+        cost_price: orderItem.cost_price_at_time,
+        average_cost_price_before: variant.average_cost_price,
+        average_cost_price_after: new_average_cost_price,
+        reference_id: new Types.ObjectId(orderId),
+      });
+    });
+
+    return this.updateStatus(orderId, { status: OrderStatus.CANCELLED });
+  }
+
+  async adminCancelOrder(orderId: string) {
+    const order = await this.orderRepository.findOne({
+      _id: new Types.ObjectId(orderId),
     });
 
     if (!order) {

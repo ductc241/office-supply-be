@@ -35,6 +35,11 @@ export class InventoryService {
     return await this.inventoryRepository.findOne(conditions, options);
   }
 
+  async find(conditions: any, options?: QueryOptions) {
+    const product = await this.inventoryRepository.find(conditions, options);
+    return product;
+  }
+
   async query(dto: QueryInventoryDto) {
     const matchStage: any = {};
 
